@@ -1,6 +1,6 @@
 FROM python:3.7
 
-WORKDIR /duckietown_pondcleaner
+WORKDIR /dtproject
 COPY requirements.txt .
 RUN python3 -m pip install -r requirements.txt
 

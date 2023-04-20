@@ -488,7 +488,6 @@ class DTProject:
         return locals, destinations
 
     def docs_path(self) -> str:
-        # TODO: use this in dts/docs/(env/)build
         # make sure we support this project version
         if self.type not in TEMPLATE_TO_DOCS or self.type_version not in TEMPLATE_TO_DOCS[self.type]:
             raise UnsupportedDTProjectVersion(

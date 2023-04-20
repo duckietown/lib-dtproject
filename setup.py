@@ -21,6 +21,7 @@ def get_version_from_source(filename):
     with open(filename) as f:
         for line in f:
             if line.startswith("__version__"):
+                # noinspection PyUnresolvedReferences
                 vers = ast.parse(line).body[0].value.s
                 break
         else:

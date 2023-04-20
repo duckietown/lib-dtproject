@@ -4,6 +4,7 @@ __all__ = [
     "DTProjectNotFound",
     "MalformedDTProject",
     "UnsupportedDTProjectVersion",
+    "NotFound",
 ]
 
 
@@ -24,4 +25,8 @@ class MalformedDTProject(DTProjectError):
 
 
 class UnsupportedDTProjectVersion(DTProjectError):
+    pass
+
+
+class NotFound(DTProjectError):
     pass

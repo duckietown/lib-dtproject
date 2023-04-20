@@ -2,9 +2,11 @@ import json
 import os
 import time
 
-from dtproject import logger
-from dtproject.exceptions import RecipeProjectNotFound, DTProjectError
-from dtproject.utils import run_cmd
+import requests
+
+from . import logger
+from .exceptions import RecipeProjectNotFound, DTProjectError
+from .utils.misc import run_cmd
 
 RECIPE_STAGE_NAME = "recipe"
 MEAT_STAGE_NAME = "meat"
@@ -89,8 +91,7 @@ def recipe_needs_update(repository: str, branch: str, location: str) -> bool:
         logger.info("Fetching remote SHA from github.com ...")
         remote_url: str = f"https://api.github.com/repos/{repository}/branches/{branch}"
         try:
-            content = version_check.get_url(remote_url)
-            data = json.loads(content)
+            data: dict = requests.get(remote_url).json()
             remote_sha = data["commit"]["sha"]
         except Exception as e:
             logger.error(str(e))

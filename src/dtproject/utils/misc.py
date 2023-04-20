@@ -1,7 +1,7 @@
 import re
 import subprocess
 
-from dtproject.constants import DOCKER_LABEL_DOMAIN
+from ..constants import DOCKER_LABEL_DOMAIN, CANONICAL_ARCH
 
 
 def run_cmd(cmd):
@@ -23,3 +23,20 @@ def git_remote_url_to_https(remote_url):
         return f"https://{res.group(1)}/{res.group(2)}/{res.group(3)}"
     return remote_url
 
+
+def assert_canonical_arch(arch):
+    if arch not in CANONICAL_ARCH.values():
+        raise ValueError(
+            f"Given architecture {arch} is not supported. "
+            f"Valid choices are: {', '.join(list(set(CANONICAL_ARCH.values())))}"
+        )
+
+
+def canonical_arch(arch):
+    if arch not in CANONICAL_ARCH:
+        raise ValueError(
+            f"Given architecture {arch} is not supported. "
+            f"Valid choices are: {', '.join(list(set(CANONICAL_ARCH.values())))}"
+        )
+    # ---
+    return CANONICAL_ARCH[arch]

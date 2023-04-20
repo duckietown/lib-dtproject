@@ -7,16 +7,25 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Optional, List
 
+import requests
+from requests import Response
+
+from dockertown import Image
+
+from dockertown.exceptions import NoSuchImage
+
 from .configurations import parse_configurations
 from .exceptions import \
     RecipeProjectNotFound, \
     DTProjectNotFound, \
     MalformedDTProject, \
-    UnsupportedDTProjectVersion
+    UnsupportedDTProjectVersion, \
+    NotFound
 
 from .constants import *
 from .recipe import get_recipe_project_dir, update_recipe, clone_recipe
-from .utils import run_cmd, git_remote_url_to_https
+from .utils.docker import docker_client
+from .utils.misc import run_cmd, git_remote_url_to_https, assert_canonical_arch
 
 
 class DTProject:
@@ -256,15 +265,15 @@ class DTProject:
         return self._repository.detached if self._repository else False
 
     def image(
-        self,
-        *,
-        arch: str,
-        registry: str,
-        owner: str,
-        version: Optional[str] = None,
-        loop: bool = False,
-        docs: bool = False,
-        extra: Optional[str] = None,
+            self,
+            *,
+            arch: str,
+            registry: str,
+            owner: str,
+            version: Optional[str] = None,
+            loop: bool = False,
+            docs: bool = False,
+            extra: Optional[str] = None,
     ) -> str:
         assert_canonical_arch(arch)
         loop = "-LOOP" if loop else ""
@@ -275,36 +284,36 @@ class DTProject:
         return f"{registry}/{owner}/{self.name}:{version}{extra}{loop}{docs}-{arch}"
 
     def image_vscode(
-        self,
-        *,
-        arch: str,
-        registry: str,
-        owner: str,
-        version: Optional[str] = None,
-        docs: bool = False,
+            self,
+            *,
+            arch: str,
+            registry: str,
+            owner: str,
+            version: Optional[str] = None,
+            docs: bool = False,
     ) -> str:
         return self.image(
             arch=arch, registry=registry, owner=owner, version=version, docs=docs, extra="vscode"
         )
 
     def image_vnc(
-        self,
-        *,
-        arch: str,
-        registry: str,
-        owner: str,
-        version: Optional[str] = None,
-        docs: bool = False,
+            self,
+            *,
+            arch: str,
+            registry: str,
+            owner: str,
+            version: Optional[str] = None,
+            docs: bool = False,
     ) -> str:
         return self.image(arch=arch, registry=registry, owner=owner, version=version, docs=docs, extra="vnc")
 
     def image_release(
-        self,
-        *,
-        arch: str,
-        owner: str,
-        registry: str,
-        docs: bool = False,
+            self,
+            *,
+            arch: str,
+            owner: str,
+            registry: str,
+            docs: bool = False,
     ) -> str:
         if not self.is_release():
             raise ValueError("The project repository is not in a release state")
@@ -314,11 +323,11 @@ class DTProject:
         return f"{registry}/{owner}/{self.name}:{version}{docs}-{arch}"
 
     def manifest(
-        self,
-        *,
-        registry: str,
-        owner: str,
-        version: Optional[str] = None,
+            self,
+            *,
+            registry: str,
+            owner: str,
+            version: Optional[str] = None,
     ) -> str:
         if version is None:
             version = re.sub(r"[^\w\-.]", "-", self.version_name)
@@ -428,8 +437,8 @@ class DTProject:
     def launch_paths(self, root: Optional[str] = None) -> Tuple[str, str]:
         # make sure we support this project version
         if (
-            self.type not in TEMPLATE_TO_LAUNCHFILE
-            or self.type_version not in TEMPLATE_TO_LAUNCHFILE[self.type]
+                self.type not in TEMPLATE_TO_LAUNCHFILE
+                or self.type_version not in TEMPLATE_TO_LAUNCHFILE[self.type]
         ):
             raise UnsupportedDTProjectVersion(
                 f"Template {self.type} v{self.type_version} for project {self.path} not supported"
@@ -487,30 +496,77 @@ class DTProject:
         return os.path.join(self.path, TEMPLATE_TO_DOCS[self.type][self.type_version])
 
     def image_metadata(self, endpoint, arch: str, owner: str, registry: str, version: str):
-        client = _docker_client(endpoint)
+        client = docker_client(endpoint)
         image_name = self.image(arch=arch, owner=owner, version=version, registry=registry)
         try:
-            image = client.images.get(image_name)
-            return image.attrs
-        except (APIError, ImageNotFound):
+            image: Image = client.image.inspect(image_name)
+            return {
+                # - id: str
+                "id": image.id,
+                # - repo_tags: List[str]
+                "repo_tags": image.repo_tags,
+                # - repo_digests: List[str]
+                "repo_digests": image.repo_digests,
+                # - parent: str
+                "parent": image.parent,
+                # - comment: str
+                "comment": image.comment,
+                # - created: datetime
+                "created": image.created.isoformat(),
+                # - container: str
+                "container": image.container,
+                # - container_config: ContainerConfig
+                "container_config": image.container_config.dict(),
+                # - docker_version: str
+                "docker_version": image.docker_version,
+                # - author: str
+                "author": image.author,
+                # - config: ContainerConfig
+                "config": image.config.dict(),
+                # - architecture: str
+                "architecture": image.architecture,
+                # - os: str
+                "os": image.os,
+                # - os_version: str
+                "os_version": image.os_version,
+                # - size: int
+                "size": image.size,
+                # - virtual_size: int
+                "virtual_size": image.virtual_size,
+                # - graph_driver: ImageGraphDriver
+                "graph_driver": image.graph_driver.dict(),
+                # - root_fs: ImageRootFS
+                "root_fs": image.root_fs.dict(),
+                # - metadata: Dict[str, str]
+                "metadata": image.metadata,
+            }
+        except NoSuchImage:
             raise Exception(f"Cannot get image metadata for {image_name!r}: \n {traceback.format_exc()}")
 
     def image_labels(self, endpoint, *, arch: str, owner: str, registry: str, version: str):
-        client = _docker_client(endpoint)
-        image_name = self.image(arch=arch, owner=owner, version=version, registry=registry)
-        try:
-            image = client.images.get(image_name)
-            return image.labels
-        except (APIError, ImageNotFound):
-            return None
+        metadata: dict = self.image_metadata(
+            endpoint, arch=arch, owner=owner, registry=registry, version=version
+        )
+        return metadata["config"]["labels"]
 
-    def remote_image_metadata(self, arch: str, owner: str, registry: str):
+    def remote_image_metadata(self, arch: str, owner: str, registry: str) -> Dict:
         assert_canonical_arch(arch)
-        image = f"{registry}/{owner}/{self.name}"
         tag = f"{self.version_name}-{arch}"
-        # TODO: use data on DCSS instead
-        XYZXYZ
-        # return self.inspect_remote_image(image, tag)
+        # compile DCSS url
+        url: str = DCSS_DOCKER_IMAGE_METADATA.format(
+            registry=registry,
+            organization=owner,
+            repository=self.name,
+            tag=tag
+        )
+        # fetch json
+        response: Response = requests.get(url)
+        if response.status_code == 200:
+            return response.json()
+        elif response.status_code == 404:
+            raise NotFound(f"Remote image '{registry}/{owner}/{self.name}:{tag}' not found")
+        else:
+            response.raise_for_status()
 
     @staticmethod
     def _get_project_info(path: str):
@@ -608,30 +664,3 @@ class DTProject:
             "INDEX_NUM_MODIFIED": nmodified,
             "INDEX_NUM_ADDED": nadded,
         }
-
-
-def assert_canonical_arch(arch):
-    if arch not in CANONICAL_ARCH.values():
-        raise ValueError(
-            f"Given architecture {arch} is not supported. "
-            f"Valid choices are: {', '.join(list(set(CANONICAL_ARCH.values())))}"
-        )
-
-
-def canonical_arch(arch):
-    if arch not in CANONICAL_ARCH:
-        raise ValueError(
-            f"Given architecture {arch} is not supported. "
-            f"Valid choices are: {', '.join(list(set(CANONICAL_ARCH.values())))}"
-        )
-    # ---
-    return CANONICAL_ARCH[arch]
-
-
-
-# def _docker_client(endpoint):
-#     return (
-#         endpoint
-#         if isinstance(endpoint, docker.DockerClient)
-#         else docker.DockerClient(base_url=sanitize_docker_baseurl(endpoint))
-#     )

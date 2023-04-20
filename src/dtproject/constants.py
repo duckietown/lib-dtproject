@@ -53,35 +53,37 @@ TEMPLATE_TO_SRC: Dict[ProjectType,
                            Callable[[RepositoryName], Tuple[RelativePath, ContainerPath]]]] = {
     # NOTE: these are not templates, they only serve the project matching their names
     "dt-commons": {
-        "1": lambda repo: ("code", "/packages/{:s}/".format(repo)),
-        "2": lambda repo: ("", "/code/{:s}/".format(repo)),
-        "3": lambda repo: ("", "/code/{:s}/".format(repo)),
+        "1": lambda _repo: ("code", "/packages/{:s}/".format(_repo)),
+        "2": lambda _repo: ("", "/code/{:s}/".format(_repo)),
+        "3": lambda _repo: ("", "/code/{:s}/".format(_repo)),
     },
     "dt-ros-commons": {
-        "1": lambda repo: ("", "/code/catkin_ws/src/{:s}/".format(repo)),
-        "2": lambda repo: ("", "/code/catkin_ws/src/{:s}/".format(repo)),
-        "3": lambda repo: ("", "/code/catkin_ws/src/{:s}/".format(repo)),
+        "1": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
+        "2": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
+        "3": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
     },
     # NOTE: these are templates and are shared by multiple projects
     "template-basic": {
-        "1": lambda repo: ("code", "/packages/{:s}/".format(repo)),
-        "2": lambda repo: ("", "/code/{:s}/".format(repo)),
-        "3": lambda repo: ("", "/code/{:s}/".format(repo)),
+        "1": lambda _repo: ("code", "/packages/{:s}/".format(_repo)),
+        "2": lambda _repo: ("", "/code/{:s}/".format(_repo)),
+        "3": lambda _repo: ("", "/code/{:s}/".format(_repo)),
     },
     "template-ros": {
-        "1": lambda repo: ("", "/code/catkin_ws/src/{:s}/".format(repo)),
-        "2": lambda repo: ("", "/code/catkin_ws/src/{:s}/".format(repo)),
-        "3": lambda repo: ("", "/code/catkin_ws/src/{:s}/".format(repo)),
+        "1": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
+        "2": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
+        "3": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
     },
     "template-core": {
-        "1": lambda repo: ("", "/code/catkin_ws/src/{:s}/".format(repo)),
-        "2": lambda repo: ("", "/code/catkin_ws/src/{:s}/".format(repo)),
-        "3": lambda repo: ("", "/code/catkin_ws/src/{:s}/".format(repo)),
+        "1": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
+        "2": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
+        "3": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
     },
     "template-exercise-recipe": {
-        "3": lambda repo: ("packages", "/code/catkin_ws/src/{:s}/packages".format(repo))
+        "3": lambda _repo: ("packages", "/code/catkin_ws/src/{:s}/packages".format(_repo))
     },
-    "template-exercise": {"3": lambda repo: ("packages/*", "/code/catkin_ws/src/{:s}/packages".format(repo))},
+    "template-exercise": {
+        "3": lambda _repo: ("packages/*", "/code/catkin_ws/src/{:s}/packages".format(_repo))
+    },
 }
 
 TEMPLATE_TO_LAUNCHFILE: Dict[ProjectType,
@@ -89,43 +91,43 @@ TEMPLATE_TO_LAUNCHFILE: Dict[ProjectType,
                                   Callable[[RepositoryName], Tuple[RelativePath, ContainerPath]]]] = {
     # NOTE: these are not templates, they only serve the project matching their names
     "dt-commons": {
-        "1": lambda repo: ("launch.sh", "/launch/{:s}/launch.sh".format(repo)),
-        "2": lambda repo: ("launchers", "/launch/{:s}".format(repo)),
-        "3": lambda repo: ("launchers", "/launch/{:s}".format(repo)),
+        "1": lambda _repo: ("launch.sh", "/launch/{:s}/launch.sh".format(_repo)),
+        "2": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
+        "3": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
     },
     "dt-ros-commons": {
-        "1": lambda repo: ("launch.sh", "/launch/{:s}/launch.sh".format(repo)),
-        "2": lambda repo: ("launchers", "/launch/{:s}".format(repo)),
-        "3": lambda repo: ("launchers", "/launch/{:s}".format(repo)),
+        "1": lambda _repo: ("launch.sh", "/launch/{:s}/launch.sh".format(_repo)),
+        "2": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
+        "3": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
     },
     # NOTE: these are templates and are shared by multiple projects
     "template-basic": {
-        "1": lambda repo: ("launch.sh", "/launch/{:s}/launch.sh".format(repo)),
-        "2": lambda repo: ("launchers", "/launch/{:s}".format(repo)),
-        "3": lambda repo: ("launchers", "/launch/{:s}".format(repo)),
+        "1": lambda _repo: ("launch.sh", "/launch/{:s}/launch.sh".format(_repo)),
+        "2": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
+        "3": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
     },
     "template-ros": {
-        "1": lambda repo: ("launch.sh", "/launch/{:s}/launch.sh".format(repo)),
-        "2": lambda repo: ("launchers", "/launch/{:s}".format(repo)),
-        "3": lambda repo: ("launchers", "/launch/{:s}".format(repo)),
+        "1": lambda _repo: ("launch.sh", "/launch/{:s}/launch.sh".format(_repo)),
+        "2": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
+        "3": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
     },
     "template-core": {
-        "1": lambda repo: ("launch.sh", "/launch/{:s}/launch.sh".format(repo)),
-        "2": lambda repo: ("launchers", "/launch/{:s}".format(repo)),
-        "3": lambda repo: ("launchers", "/launch/{:s}".format(repo)),
+        "1": lambda _repo: ("launch.sh", "/launch/{:s}/launch.sh".format(_repo)),
+        "2": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
+        "3": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
     },
-    "template-exercise-recipe": {"3": lambda repo: ("launchers", "/launch/{:s}".format(repo))},
-    "template-exercise": {"3": lambda repo: ("launchers", "/launch/{:s}".format(repo))},
+    "template-exercise-recipe": {"3": lambda _repo: ("launchers", "/launch/{:s}".format(_repo))},
+    "template-exercise": {"3": lambda _repo: ("launchers", "/launch/{:s}".format(_repo))},
 }
 
 TEMPLATE_TO_ASSETS: Dict[ProjectType,
                          Dict[ProjectTypeVersion,
                               Callable[[RepositoryName], Tuple[RelativePath, ContainerPath]]]] = {
     "template-exercise-recipe": {
-        "3": lambda repo: ("assets/*", "/code/catkin_ws/src/{:s}/assets".format(repo))
+        "3": lambda _repo: ("assets/*", "/code/catkin_ws/src/{:s}/assets".format(_repo))
     },
     "template-exercise": {
-        "3": lambda repo: ("assets/*", "/code/catkin_ws/src/{:s}/assets".format(repo))
+        "3": lambda _repo: ("assets/*", "/code/catkin_ws/src/{:s}/assets".format(_repo))
     },
 }
 
@@ -158,3 +160,6 @@ TEMPLATE_TO_DOCS: Dict[ProjectType,
         "2": "",
     }
 }
+
+DCSS_DOCKER_IMAGE_METADATA = "https://duckietown-public-storage.s3.amazonaws.com/docker/image/{registry}/" \
+                             "{organization}/{repository}/{tag}/latest.json"

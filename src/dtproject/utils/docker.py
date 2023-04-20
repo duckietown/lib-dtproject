@@ -1,17 +1,15 @@
 import socket
-from typing import Optional
+from typing import Optional, Union
 
 from dockertown import DockerClient
 
 DEFAULT_DOCKER_TCP_PORT = "2375"
 
 
-def docker_client(endpoint) -> DockerClient:
-    return (
-        endpoint
-        if isinstance(endpoint, DockerClient)
+def docker_client(endpoint: Union[None, str, DockerClient]) -> DockerClient:
+    return endpoint \
+        if isinstance(endpoint, DockerClient) \
         else DockerClient(host=sanitize_docker_baseurl(endpoint))
-    )
 
 
 def sanitize_docker_baseurl(baseurl: str, port=DEFAULT_DOCKER_TCP_PORT) -> Optional[str]:

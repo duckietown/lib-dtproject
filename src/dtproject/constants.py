@@ -13,6 +13,7 @@ REQUIRED_METADATA_KEYS = {
     "1": ["TYPE", "VERSION"],
     "2": ["TYPE", "VERSION"],
     "3": ["TYPE", "VERSION"],
+    "4": ["TYPE", "VERSION"],
 }
 
 REQUIRED_METADATA_PER_TYPE_KEYS = {
@@ -48,6 +49,9 @@ ARCH_TO_PLATFORM_ARCH = {"arm32v7": "arm", "arm64v8": "arm64", "amd64": "amd64"}
 
 ARCH_TO_PLATFORM_VARIANT = {"arm32v7": "v7", "arm64v8": "", "amd64": ""}
 
+# kept for backward compatibility
+DISTRO_KEY = {"1": "MAJOR", "2": "DISTRO", "3": "DISTRO"}
+
 TEMPLATE_TO_SRC: Dict[ProjectType,
                       Dict[ProjectTypeVersion,
                            Callable[[RepositoryName], Tuple[RelativePath, ContainerPath]]]] = {
@@ -67,6 +71,7 @@ TEMPLATE_TO_SRC: Dict[ProjectType,
         "1": lambda _repo: ("code", "/packages/{:s}/".format(_repo)),
         "2": lambda _repo: ("", "/code/{:s}/".format(_repo)),
         "3": lambda _repo: ("", "/code/{:s}/".format(_repo)),
+        "4": lambda _repo: ("", "/code/{:s}/".format(_repo)),
     },
     "template-ros": {
         "1": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
@@ -105,6 +110,7 @@ TEMPLATE_TO_LAUNCHFILE: Dict[ProjectType,
         "1": lambda _repo: ("launch.sh", "/launch/{:s}/launch.sh".format(_repo)),
         "2": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
         "3": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
+        "4": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
     },
     "template-ros": {
         "1": lambda _repo: ("launch.sh", "/launch/{:s}/launch.sh".format(_repo)),

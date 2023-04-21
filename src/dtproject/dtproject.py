@@ -70,7 +70,12 @@ class DTProject:
 
     @property
     def name(self):
-        return (self._repository.name if self._repository else os.path.basename(self.path)).lower()
+        return self._project_info.get(
+            # a name defined in the dtproject descriptor takes precedence
+            "NAME",
+            # fallback is repository name and eventually directory name
+            self._repository.name if self._repository else os.path.basename(self.path)
+        ).lower()
 
     @property
     def metadata(self) -> Dict[str, str]:

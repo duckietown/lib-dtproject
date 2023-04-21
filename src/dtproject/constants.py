@@ -1,5 +1,6 @@
 from typing import Dict, Callable, Tuple
 
+ProjectName = str
 ProjectType = str
 ProjectTypeVersion = str
 RelativePath = str
@@ -54,7 +55,7 @@ DISTRO_KEY = {"1": "MAJOR", "2": "DISTRO", "3": "DISTRO"}
 
 TEMPLATE_TO_SRC: Dict[ProjectType,
                       Dict[ProjectTypeVersion,
-                           Callable[[RepositoryName], Tuple[RelativePath, ContainerPath]]]] = {
+                           Callable[[ProjectName], Tuple[RelativePath, ContainerPath]]]] = {
     # NOTE: these are not templates, they only serve the project matching their names
     "dt-commons": {
         "1": lambda _repo: ("code", "/packages/{:s}/".format(_repo)),
@@ -93,7 +94,7 @@ TEMPLATE_TO_SRC: Dict[ProjectType,
 
 TEMPLATE_TO_LAUNCHFILE: Dict[ProjectType,
                              Dict[ProjectTypeVersion,
-                                  Callable[[RepositoryName], Tuple[RelativePath, ContainerPath]]]] = {
+                                  Callable[[ProjectName], Tuple[RelativePath, ContainerPath]]]] = {
     # NOTE: these are not templates, they only serve the project matching their names
     "dt-commons": {
         "1": lambda _repo: ("launch.sh", "/launch/{:s}/launch.sh".format(_repo)),
@@ -128,7 +129,7 @@ TEMPLATE_TO_LAUNCHFILE: Dict[ProjectType,
 
 TEMPLATE_TO_ASSETS: Dict[ProjectType,
                          Dict[ProjectTypeVersion,
-                              Callable[[RepositoryName], Tuple[RelativePath, ContainerPath]]]] = {
+                              Callable[[ProjectName], Tuple[RelativePath, ContainerPath]]]] = {
     "template-exercise-recipe": {
         "3": lambda _repo: ("assets/*", "/code/catkin_ws/src/{:s}/assets".format(_repo))
     },

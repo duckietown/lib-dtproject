@@ -345,16 +345,13 @@ class DTProject:
         except NotImplementedError:
             configurations = {}
         # do docker inspect
-        inspect = self.image_metadata(endpoint, arch=arch, owner=owner, version=version, registry=registry)
+        image: dict = self.image_metadata(endpoint, arch=arch, owner=owner, version=version, registry=registry)
 
-        # remove useless data
-        del inspect["ContainerConfig"]
-        del inspect["Config"]["Labels"]
         # compile metadata
         meta = {
             "version": "1.0",
             "tag": image_tag,
-            "image": inspect,
+            "image": image,
             "project": {
                 "path": self.path,
                 "name": self.name,

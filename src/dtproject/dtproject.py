@@ -500,7 +500,7 @@ class DTProject:
         image_name = self.image(arch=arch, owner=owner, version=version, registry=registry)
         try:
             image: Image = client.image.inspect(image_name)
-            return {
+            metadata: dict = {
                 # - id: str
                 "id": image.id,
                 # - repo_tags: List[str]
@@ -540,6 +540,11 @@ class DTProject:
                 # - metadata: Dict[str, str]
                 "metadata": image.metadata,
             }
+            # sanitize posizpath objects
+            metadata["container_config"]["working_dir"] = str(metadata["container_config"]["working_dir"])
+            metadata["config"]["working_dir"] = str(metadata["config"]["working_dir"])
+            # ---
+            return metadata
         except NoSuchImage:
             raise Exception(f"Cannot get image metadata for {image_name!r}: \n {traceback.format_exc()}")
 

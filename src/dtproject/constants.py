@@ -51,7 +51,7 @@ ARCH_TO_PLATFORM_ARCH = {"arm32v7": "arm", "arm64v8": "arm64", "amd64": "amd64"}
 ARCH_TO_PLATFORM_VARIANT = {"arm32v7": "v7", "arm64v8": "", "amd64": ""}
 
 # kept for backward compatibility
-DISTRO_KEY = {"1": "MAJOR", "2": "DISTRO", "3": "DISTRO"}
+DISTRO_KEY = {"1": "MAJOR", "2": "DISTRO", "3": "DISTRO", "4": "DISTRO"}
 
 TEMPLATE_TO_SRC: Dict[ProjectType,
                       Dict[ProjectTypeVersion,

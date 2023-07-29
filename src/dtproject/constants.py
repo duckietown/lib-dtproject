@@ -61,11 +61,13 @@ TEMPLATE_TO_SRC: Dict[ProjectType,
         "1": lambda _repo: ("code", "/packages/{:s}/".format(_repo)),
         "2": lambda _repo: ("", "/code/{:s}/".format(_repo)),
         "3": lambda _repo: ("", "/code/{:s}/".format(_repo)),
+        "4": lambda _repo: ("", "/code/{:s}/".format(_repo)),
     },
     "dt-ros-commons": {
         "1": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
         "2": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
         "3": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
+        "4": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
     },
     # NOTE: these are templates and are shared by multiple projects
     "template-basic": {

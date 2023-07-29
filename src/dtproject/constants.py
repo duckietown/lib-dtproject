@@ -102,11 +102,13 @@ TEMPLATE_TO_LAUNCHFILE: Dict[ProjectType,
         "1": lambda _repo: ("launch.sh", "/launch/{:s}/launch.sh".format(_repo)),
         "2": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
         "3": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
+        "4": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
     },
     "dt-ros-commons": {
         "1": lambda _repo: ("launch.sh", "/launch/{:s}/launch.sh".format(_repo)),
         "2": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
         "3": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
+        "4": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
     },
     # NOTE: these are templates and are shared by multiple projects
     "template-basic": {

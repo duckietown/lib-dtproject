@@ -1,13 +1,18 @@
 import copy
+import dataclasses
 import glob
 import os
 import re
 import traceback
+from abc import abstractmethod
 from pathlib import Path
+from subprocess import CalledProcessError
 from types import SimpleNamespace
 from typing import Optional, List
 
 import requests
+import yaml
+from dataclass_wizard import YAMLWizard
 from requests import Response
 
 from dockertown import Image
@@ -39,12 +44,7 @@ class DTProject:
         # use `fs` adapter by default
         self._path = os.path.abspath(path)
         self._adapters.append("fs")
-        # use `dtproject` adapter (required)
-        self._project_info = self._get_project_info(self._path)
-        self._type = self._project_info["TYPE"]
-        self._type_version = self._project_info["TYPE_VERSION"]
-        self._version = self._project_info["VERSION"]
-        self._adapters.append("dtproject")
+        # recipe info
         self._custom_recipe_dir: Optional[str] = None
         self._recipe_version: Optional[str] = None
         # use `git` adapter if available
@@ -63,39 +63,61 @@ class DTProject:
                 index_nadded=repo_info["INDEX_NUM_ADDED"],
             )
             self._adapters.append("git")
+        # at this point we initialize the proper subclass
+        for DTProjectSubClass in [DTProjectV1to3, DTProjectV4]:
+            if DTProjectSubClass.is_instance_of(path):
+                self.__class__ = DTProjectSubClass
+                # noinspection PyTypeChecker
+                DTProjectSubClass.__init__(self, path)
 
     @property
-    def path(self):
+    def path(self) -> str:
         return self._path
 
     @property
-    def name(self):
-        return self._project_info.get(
-            # a name defined in the dtproject descriptor takes precedence
-            "NAME",
-            # fallback is repository name and eventually directory name
-            self._repository.name if self._repository else os.path.basename(self.path)
-        ).lower()
+    @abstractmethod
+    def name(self) -> str:
+        pass
 
     @property
+    @abstractmethod
+    def description(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def maintainer(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def icon(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def version(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def type(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def type_version(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
     def metadata(self) -> Dict[str, str]:
-        return copy.deepcopy(self._project_info)
+        pass
 
     @property
-    def type(self):
-        return self._type
-
-    @property
-    def type_version(self):
-        return self._type_version
-
-    @property
+    @abstractmethod
     def distro(self):
-        return self._repository.branch.split("-")[0] if self._repository else "latest"
-
-    @property
-    def version(self):
-        return self._version
+        pass
 
     @property
     def head_version(self):
@@ -350,7 +372,13 @@ class DTProject:
         except NotImplementedError:
             configurations = {}
         # do docker inspect
-        image: dict = self.image_metadata(endpoint, arch=arch, owner=owner, version=version, registry=registry)
+        image: dict = self.image_metadata(
+            endpoint,
+            arch=arch,
+            owner=owner,
+            version=version,
+            registry=registry
+        )
 
         # compile metadata
         meta = {
@@ -388,14 +416,14 @@ class DTProject:
         return meta
 
     def configurations(self) -> dict:
-        if int(self._type_version) < 2:
+        if int(self.type_version) < 2:
             raise NotImplementedError(
                 "Project configurations were introduced with template "
                 "types v2. Your project does not support them."
             )
         # ---
         configurations = {}
-        if self._type_version == "2":
+        if self.type_version == "2":
             configurations_file = os.path.join(self._path, "configurations.yaml")
             if os.path.isfile(configurations_file):
                 configurations = parse_configurations(configurations_file)
@@ -579,6 +607,282 @@ class DTProject:
             response.raise_for_status()
 
     @staticmethod
+    def _get_repo_info(path):
+        # get current SHA
+        try:
+            sha = run_cmd(["git", "-C", f'"{path}"', "rev-parse", "HEAD"])[0]
+        except CalledProcessError as e:
+            if e.returncode == 128:
+                # no commits yet
+                sha = "ND"
+            else:
+                raise e
+        # get branch name
+        branch = run_cmd(["git", "-C", f'"{path}"', "branch", "--show-current"])[0]
+        # head tag
+        try:
+            head_tag = run_cmd(
+                [
+                    "git",
+                    "-C",
+                    f'"{path}"',
+                    "describe",
+                    "--exact-match",
+                    "--tags",
+                    "HEAD",
+                    "2>/dev/null",
+                    "||",
+                    ":",
+                ]
+            )
+        except CalledProcessError as e:
+            if sha == "ND":
+                # there is no HEAD
+                head_tag = None
+            else:
+                raise e
+        head_tag = head_tag[0] if head_tag else "ND"
+        closest_tag = run_cmd(["git", "-C", f'"{path}"', "tag"])
+        closest_tag = closest_tag[-1] if closest_tag else "ND"
+        repo = None
+        # get the origin url
+        try:
+            origin_url = run_cmd(["git", "-C", f'"{path}"', "config", "--get", "remote.origin.url"])[0]
+            if origin_url.endswith(".git"):
+                origin_url = origin_url[:-4]
+            if origin_url.endswith("/"):
+                origin_url = origin_url[:-1]
+            repo = origin_url.split("/")[-1]
+        except CalledProcessError as e:
+            if e.returncode == 1:
+                origin_url = None
+            else:
+                raise e
+        # get info about current git INDEX
+        porcelain = ["git", "-C", f'"{path}"', "status", "--porcelain"]
+        modified = run_cmd(porcelain + ["--untracked-files=no"])
+        nmodified = len(modified)
+        added = run_cmd(porcelain)
+        # we are not counting files with .resolved extension
+        added = list(filter(lambda f: not f.endswith(".resolved"), added))
+        nadded = len(added)
+        # return info
+        return {
+            "REPOSITORY": repo,
+            "SHA": sha,
+            "BRANCH": branch,
+            "VERSION.HEAD": head_tag,
+            "VERSION.CLOSEST": closest_tag,
+            "ORIGIN.URL": origin_url or "ND",
+            "ORIGIN.HTTPS.URL": git_remote_url_to_https(origin_url) if origin_url else None,
+            "INDEX_NUM_MODIFIED": nmodified,
+            "INDEX_NUM_ADDED": nadded,
+        }
+
+    @classmethod
+    @abstractmethod
+    def is_instance_of(cls, path: str) -> bool:
+        pass
+
+
+class DTProjectV4(DTProject):
+    """
+    Class representing a DTProject on disk.
+    """
+
+    @dataclasses.dataclass
+    class Maintainer(YAMLWizard):
+        name: str
+        email: str
+        organization: Optional[str] = None
+
+        def __str__(self):
+            if self.organization:
+                return f"{self.name} @ {self.organization} ({self.email})"
+            return f"{self.name} ({self.email})"
+
+    @dataclasses.dataclass
+    class SelfMeta(YAMLWizard):
+        name: str
+        maintainer: 'DTProjectV4.Maintainer'
+        description: str
+        icon: str
+        version: str
+
+    @dataclasses.dataclass
+    class TemplateMeta(YAMLWizard):
+        name: str
+        version: str
+        provider: Optional[str] = "github.com"
+
+    @dataclasses.dataclass
+    class DistroMeta(YAMLWizard):
+        name: str
+
+    @dataclasses.dataclass
+    class Meta(YAMLWizard):
+        self: 'DTProjectV4.SelfMeta'
+        template: 'DTProjectV4.TemplateMeta'
+        distro: 'DTProjectV4.DistroMeta'
+
+    # noinspection PyMissingConstructor
+    def __init__(self, path: str):
+        # use `dtproject` adapter (required)
+        self._metadata: DTProjectV4.Meta = self._get_project_info(path)
+        self._adapters.append("dtproject")
+
+    @property
+    def name(self) -> str:
+        # a name in the dtproject meta file takes precedence, fallback to repository name then directory name
+        return (
+            self._metadata.self.name or
+            (self._repository.name if (self._repository and self._repository.name) else
+             os.path.basename(self.path))
+        ).lower()
+
+    @property
+    def description(self) -> str:
+        return self._metadata.self.description
+
+    @property
+    def maintainer(self) -> str:
+        return str(self._metadata.self.maintainer)
+
+    @property
+    def icon(self) -> str:
+        return self._metadata.self.icon
+
+    @property
+    def version(self) -> str:
+        return self._metadata.self.version
+
+    @property
+    def type(self) -> str:
+        return self._metadata.template.name
+
+    @property
+    def type_version(self) -> str:
+        return self._metadata.template.version
+
+    @property
+    def distro(self):
+        return self._metadata.distro.name
+
+    @property
+    def metadata(self) -> dict:
+        # TODO: this must be tested in a unittest
+        return yaml.safe_load(self._metadata.to_yaml())
+
+    @staticmethod
+    def _get_project_info(path: str) -> 'DTProjectV4.Meta':
+        if not os.path.exists(path):
+            msg = f"The project path {path!r} does not exist."
+            raise OSError(msg)
+
+        metadir: str = os.path.join(path, "dtproject")
+        # if the directory 'dtproject' is missing
+        if not os.path.exists(metadir):
+            msg = f"The path '{path}' does not appear to be a Duckietown project."
+            raise DTProjectNotFound(msg)
+        # if 'dtproject' is not a directory
+        if not os.path.isdir(metadir):
+            msg = f"The path '{metadir}' must be a directory."
+            raise MalformedDTProject(msg)
+
+        # make sure the self.yaml is there
+        self_meta: str = os.path.join(metadir, "self.yaml")
+        if not os.path.exists(self_meta) or not os.path.isfile(self_meta):
+            msg = f"The file '{self_meta}' is missing."
+            raise MalformedDTProject(msg)
+
+        # make sure the template.yaml is there
+        template_meta: str = os.path.join(metadir, "template.yaml")
+        if not os.path.exists(template_meta) or not os.path.isfile(template_meta):
+            msg = f"The file '{template_meta}' is missing."
+            raise MalformedDTProject(msg)
+
+        # make sure the distro.yaml is there
+        distro_meta: str = os.path.join(metadir, "distro.yaml")
+        if not os.path.exists(distro_meta) or not os.path.isfile(distro_meta):
+            msg = f"The file '{distro_meta}' is missing."
+            raise MalformedDTProject(msg)
+
+        # - load self.yaml
+        metadata: DTProjectV4.Meta = DTProjectV4.Meta(
+            self=DTProjectV4.SelfMeta.from_yaml_file(self_meta),
+            template=DTProjectV4.TemplateMeta.from_yaml_file(template_meta),
+            distro=DTProjectV4.DistroMeta.from_yaml_file(distro_meta),
+        )
+
+        # ---
+        return metadata
+
+    @classmethod
+    def is_instance_of(cls, path: str) -> bool:
+        try:
+            cls._get_project_info(path)
+        except Exception:
+            return False
+        return True
+
+
+class DTProjectV1to3(DTProject):
+    """
+    Class representing a DTProject on disk.
+    """
+
+    # noinspection PyMissingConstructor
+    def __init__(self, path: str):
+        # use `dtproject` adapter (required)
+        self._project_info = self._get_project_info(path)
+        self._type = self._project_info["TYPE"]
+        self._type_version = self._project_info["TYPE_VERSION"]
+        self._version = self._project_info["VERSION"]
+        self._adapters.append("dtproject")
+
+    @property
+    def name(self) -> str:
+        return self._project_info.get(
+            # a name defined in the dtproject descriptor takes precedence
+            "NAME",
+            # fallback is repository name and eventually directory name
+            self._repository.name if (self._repository and self._repository.name) else
+            os.path.basename(self.path)
+        ).lower()
+
+    @property
+    def description(self) -> str:
+        raise NotImplementedError(f"Field 'description' not implemented in DTProject v{self.type_version}")
+
+    @property
+    def maintainer(self) -> str:
+        raise NotImplementedError(f"Field 'maintainer' not implemented in DTProject v{self.type_version}")
+
+    @property
+    def icon(self) -> str:
+        raise NotImplementedError(f"Field 'icon' not implemented in DTProject v{self.type_version}")
+
+    @property
+    def version(self) -> str:
+        return self._version
+
+    @property
+    def type(self) -> str:
+        return self._type
+
+    @property
+    def type_version(self) -> str:
+        return self._type_version
+
+    @property
+    def distro(self):
+        return self._repository.branch.split("-")[0] if self._repository else "latest"
+
+    @property
+    def metadata(self) -> Dict[str, str]:
+        return copy.deepcopy(self._project_info)
+
+    @staticmethod
     def _get_project_info(path: str):
         if not os.path.exists(path):
             msg = f"The project path {path!r} does not exist."
@@ -627,50 +931,10 @@ class DTProject:
         metadata["PATH"] = path
         return metadata
 
-    @staticmethod
-    def _get_repo_info(path):
-        sha = run_cmd(["git", "-C", f'"{path}"', "rev-parse", "HEAD"])[0]
-        branch = run_cmd(["git", "-C", f'"{path}"', "rev-parse", "--abbrev-ref", "HEAD"])[0]
-        head_tag = run_cmd(
-            [
-                "git",
-                "-C",
-                f'"{path}"',
-                "describe",
-                "--exact-match",
-                "--tags",
-                "HEAD",
-                "2>/dev/null",
-                "||",
-                ":",
-            ]
-        )
-        head_tag = head_tag[0] if head_tag else "ND"
-        closest_tag = run_cmd(["git", "-C", f'"{path}"', "tag"])
-        closest_tag = closest_tag[-1] if closest_tag else "ND"
-        origin_url = run_cmd(["git", "-C", f'"{path}"', "config", "--get", "remote.origin.url"])[0]
-        if origin_url.endswith(".git"):
-            origin_url = origin_url[:-4]
-        if origin_url.endswith("/"):
-            origin_url = origin_url[:-1]
-        repo = origin_url.split("/")[-1]
-        # get info about current git INDEX
-        porcelain = ["git", "-C", f'"{path}"', "status", "--porcelain"]
-        modified = run_cmd(porcelain + ["--untracked-files=no"])
-        nmodified = len(modified)
-        added = run_cmd(porcelain)
-        # we are not counting files with .resolved extension
-        added = list(filter(lambda f: not f.endswith(".resolved"), added))
-        nadded = len(added)
-        # return info
-        return {
-            "REPOSITORY": repo,
-            "SHA": sha,
-            "BRANCH": branch,
-            "VERSION.HEAD": head_tag,
-            "VERSION.CLOSEST": closest_tag,
-            "ORIGIN.URL": origin_url,
-            "ORIGIN.HTTPS.URL": git_remote_url_to_https(origin_url),
-            "INDEX_NUM_MODIFIED": nmodified,
-            "INDEX_NUM_ADDED": nadded,
-        }
+    @classmethod
+    def is_instance_of(cls, path: str) -> bool:
+        try:
+            cls._get_project_info(path)
+        except Exception:
+            return False
+        return True

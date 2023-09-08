@@ -1,14 +1,15 @@
-tag=dtproject
+library_name=dtproject
+tag=$(library_name)
 
-regular_packages=dtproject
-test_packages=dtproject_tests
+regular_packages=$(library_name)
+test_packages=$(library_name)_tests
 cover_packages=$(test_packages),$(regular_packages)
 
 
 CIRCLE_NODE_INDEX ?= 0
 CIRCLE_NODE_TOTAL ?= 1
 
-out=out
+out=./out
 coverage_dir=$(out)/coverage
 tr=$(out)/test-results
 xunit_output=$(tr)/nose-$(CIRCLE_NODE_INDEX)-xunit.xml
@@ -38,23 +39,23 @@ black:
 
 clean:
 	coverage erase
-	rm -rf $(out) $(coverage_dir) $(tr)
+	rm -rf $(coverage_dir) $(tr)
 
 test: clean
 	mkdir -p  $(tr)
-	DISABLE_CONTRACTS=1 nosetests $(extra) $(coverage)  src  -v --nologcapture $(xunitmp)
+	DISABLE_CONTRACTS=1 nosetests $(extra) $(coverage) src -v --nologcapture $(xunitmp)
 
 
 test-parallel: clean
 	mkdir -p  $(tr)
-	DISABLE_CONTRACTS=1 nosetests $(extra) $(coverage) src  -v --nologcapture $(parallel)
+	DISABLE_CONTRACTS=1 nosetests $(extra) $(coverage) src -v --nologcapture $(parallel)
 
 
 test-parallel-circle:
 	DISABLE_CONTRACTS=1 \
 	NODE_TOTAL=$(CIRCLE_NODE_TOTAL) \
 	NODE_INDEX=$(CIRCLE_NODE_INDEX) \
-	nosetests $(coverage) $(xunitmp) src  -v  $(parallel)
+	nosetests $(coverage) $(xunitmp) src $(parallel)
 
 
 coverage-combine:
@@ -69,7 +70,23 @@ build-no-cache:
 	docker build --no-cache -t $(tag) .
 
 test-docker: build
-	docker run -it $(tag) make test
+	docker run -it --rm -v $(PWD)/out:/library/out:rw $(tag) make test
+
+test-docker-mounted-src:
+	docker run -it --rm \
+		-v $(PWD)/out:/library/out:rw \
+		-v $(PWD)/assets:/library/assets:ro \
+		-v $(PWD)/src:/library/src:ro \
+		$(tag) \
+		make test
+
+bash-docker-mounted-src:
+	docker run -it --rm \
+		-v $(PWD)/out:/library/out:rw \
+		-v $(PWD)/assets:/library/assets:ro \
+		-v $(PWD)/src:/library/src:ro \
+		$(tag) \
+		bash
 
 
 run:
@@ -78,11 +95,11 @@ run:
 
 run-with-mounted-src:
 	mkdir -p out-docker
-	docker run -it -v $(PWD)/src:/dtproject/src:ro -v $(PWD)/out-docker:/out $(tag) dt-pc-demo
+	docker run -it -v $(PWD)/src:/library/src:ro -v $(PWD)/out-docker:/out $(tag) dt-pc-demo
 
 
 coverage-report:
-	coverage html  -d $(coverage_dir)
+	coverage html -d $(coverage_dir)
 
 docs:
 	sphinx-build src $(out)/docs
@@ -99,8 +116,12 @@ bump: # v2
 	git push --tags
 	git push
 
+upload: # v3
+	dts build_utils check-not-dirty
+	dts build_utils check-tagged
+	dts build_utils check-need-upload --package duckietown-pondcleaner-ente make upload-do
 
-upload:
+upload-do:
 	rm -f dist/*
 	rm -rf src/*.egg-info
 	python3 setup.py sdist

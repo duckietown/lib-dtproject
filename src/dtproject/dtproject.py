@@ -116,6 +116,11 @@ class DTProject:
 
     @property
     @abstractmethod
+    def layers(self) -> Dict[str, dict]:
+        pass
+
+    @property
+    @abstractmethod
     def distro(self):
         pass
 
@@ -160,8 +165,11 @@ class DTProject:
             self._custom_recipe_dir
             if self._custom_recipe_dir
             else get_recipe_project_dir(
+                # TODO: this should be using layers instead
                 self.metadata["RECIPE_REPOSITORY"],
+                # TODO: this should be using layers instead
                 self._recipe_version or self.metadata["RECIPE_BRANCH"],
+                # TODO: this should be using layers instead
                 self.metadata["RECIPE_LOCATION"],
             )
         )
@@ -254,8 +262,11 @@ class DTProject:
         # clone the project specified recipe (if necessary)
         if not os.path.exists(self.recipe_dir):
             cloned: bool = clone_recipe(
+                # TODO: this should be using layers instead
                 self.metadata["RECIPE_REPOSITORY"],
+                # TODO: this should be using layers instead
                 self._recipe_version or self.metadata["RECIPE_BRANCH"],
+                # TODO: this should be using layers instead
                 self.metadata["RECIPE_LOCATION"],
             )
             if not cloned:
@@ -271,8 +282,11 @@ class DTProject:
         """Update recipe if not using custom given recipe"""
         if self.needs_recipe and not self._custom_recipe_dir:
             return update_recipe(
+                # TODO: this should be using layers instead
                 self.metadata["RECIPE_REPOSITORY"],
+                # TODO: this should be using layers instead
                 self._recipe_version or self.metadata["RECIPE_BRANCH"],
+                # TODO: this should be using layers instead
                 self.metadata["RECIPE_LOCATION"],
             )  # raises: UserError if the recipe has not been cloned
         return False
@@ -690,6 +704,8 @@ class DTProjectV4(DTProject):
     Class representing a DTProject on disk.
     """
 
+    REQUIRED_LAYERS = ["self", "template", "distro", "base"]
+
     @dataclasses.dataclass
     class Maintainer(YAMLWizard):
         name: str
@@ -702,7 +718,7 @@ class DTProjectV4(DTProject):
             return f"{self.name} ({self.email})"
 
     @dataclasses.dataclass
-    class SelfMeta(YAMLWizard):
+    class LayerSelf(YAMLWizard):
         name: str
         maintainer: 'DTProjectV4.Maintainer'
         description: str
@@ -710,117 +726,145 @@ class DTProjectV4(DTProject):
         version: str
 
     @dataclasses.dataclass
-    class TemplateMeta(YAMLWizard):
+    class LayerTemplate(YAMLWizard):
         name: str
         version: str
         provider: Optional[str] = "github.com"
 
     @dataclasses.dataclass
-    class DistroMeta(YAMLWizard):
+    class LayerDistro(YAMLWizard):
         name: str
 
     @dataclasses.dataclass
-    class Meta(YAMLWizard):
-        self: 'DTProjectV4.SelfMeta'
-        template: 'DTProjectV4.TemplateMeta'
-        distro: 'DTProjectV4.DistroMeta'
+    class LayerBase(YAMLWizard):
+        repository: str
+        registry: Optional[str] = None
+        organization: Optional[str] = None
+        tag: Optional[str] = None
+
+    @dataclasses.dataclass
+    class Layers(YAMLWizard):
+        self: 'DTProjectV4.LayerSelf'
+        template: 'DTProjectV4.LayerTemplate'
+        distro: 'DTProjectV4.LayerDistro'
+        base: 'DTProjectV4.LayerBase'
 
     # noinspection PyMissingConstructor
     def __init__(self, path: str):
         # use `dtproject` adapter (required)
-        self._metadata: DTProjectV4.Meta = self._get_project_info(path)
+        self._layers: DTProjectV4.Layers = self._load_layers(path)
         self._adapters.append("dtproject")
 
     @property
     def name(self) -> str:
-        # a name in the dtproject meta file takes precedence, fallback to repository name then directory name
+        # a name in the 'self' layer takes precedence, fallback to repository name then directory name
         return (
-            self._metadata.self.name or
+            self._layers.self.name or
             (self._repository.name if (self._repository and self._repository.name) else
              os.path.basename(self.path))
         ).lower()
 
     @property
     def description(self) -> str:
-        return self._metadata.self.description
+        return self._layers.self.description
 
     @property
     def maintainer(self) -> str:
-        return str(self._metadata.self.maintainer)
+        return str(self._layers.self.maintainer)
 
     @property
     def icon(self) -> str:
-        return self._metadata.self.icon
+        return self._layers.self.icon
 
     @property
     def version(self) -> str:
-        return self._metadata.self.version
+        return self._layers.self.version
 
     @property
     def type(self) -> str:
-        return self._metadata.template.name
+        return self._layers.template.name
 
     @property
     def type_version(self) -> str:
-        return self._metadata.template.version
+        return self._layers.template.version
 
     @property
     def distro(self):
-        return self._metadata.distro.name
+        return self._layers.distro.name
 
     @property
     def metadata(self) -> dict:
-        # TODO: this must be tested in a unittest
-        return yaml.safe_load(self._metadata.to_yaml())
+        # NOTE: we are only keeping this here for backward compatibility with DTProjects v1,2,3
+        return {
+            "VERSION": self.version,
+            "TYPE": self.type,
+            "TYPE_VERSION": self.type_version,
+            "PATH": self.path,
+        }
+
+    @property
+    def layers(self) -> Dict[str, dict]:
+        return dataclasses.asdict(self._layers)
 
     @staticmethod
-    def _get_project_info(path: str) -> 'DTProjectV4.Meta':
+    def _load_layers(path: str) -> 'DTProjectV4.Layers':
         if not os.path.exists(path):
             msg = f"The project path {path!r} does not exist."
             raise OSError(msg)
 
-        metadir: str = os.path.join(path, "dtproject")
+        layers_dir: str = os.path.join(path, "dtproject")
         # if the directory 'dtproject' is missing
-        if not os.path.exists(metadir):
+        if not os.path.exists(layers_dir):
             msg = f"The path '{path}' does not appear to be a Duckietown project."
             raise DTProjectNotFound(msg)
         # if 'dtproject' is not a directory
-        if not os.path.isdir(metadir):
-            msg = f"The path '{metadir}' must be a directory."
+        if not os.path.isdir(layers_dir):
+            msg = f"The path '{layers_dir}' must be a directory."
             raise MalformedDTProject(msg)
 
-        # make sure the self.yaml is there
-        self_meta: str = os.path.join(metadir, "self.yaml")
-        if not os.path.exists(self_meta) or not os.path.isfile(self_meta):
-            msg = f"The file '{self_meta}' is missing."
-            raise MalformedDTProject(msg)
+        # load required layers
+        required_layers: Dict[str, str] = {}
+        for layer_name in DTProjectV4.REQUIRED_LAYERS:
+            # make sure the <layer>.yaml file is there
+            layer_fpath: str = os.path.join(layers_dir, f"{layer_name}.yaml")
+            if not os.path.exists(layer_fpath) or not os.path.isfile(layer_fpath):
+                msg = f"The file '{layer_fpath}' is missing."
+                raise MalformedDTProject(msg)
+            required_layers[layer_name] = layer_fpath
 
-        # make sure the template.yaml is there
-        template_meta: str = os.path.join(metadir, "template.yaml")
-        if not os.path.exists(template_meta) or not os.path.isfile(template_meta):
-            msg = f"The file '{template_meta}' is missing."
-            raise MalformedDTProject(msg)
+        # load custom layers
+        custom_layers: Dict[str, dict] = {}
+        layer_pattern = os.path.join(path, "dtproject", "*.yaml")
+        for layer_fpath in glob.glob(layer_pattern):
+            layer_name: str = Path(layer_fpath).stem
+            if layer_name not in DTProjectV4.REQUIRED_LAYERS:
+                with open(layer_fpath, "rt") as fin:
+                    layer_content: dict = yaml.safe_load(fin) or {}
+                    custom_layers[layer_name] = layer_content
 
-        # make sure the distro.yaml is there
-        distro_meta: str = os.path.join(metadir, "distro.yaml")
-        if not os.path.exists(distro_meta) or not os.path.isfile(distro_meta):
-            msg = f"The file '{distro_meta}' is missing."
-            raise MalformedDTProject(msg)
+        # extend layers class
+        Layers = dataclasses.make_dataclass(
+            'ExtendedLayers',
+            fields=[(layer, dict) for layer in custom_layers],
+            bases=(DTProjectV4.Layers,)
+        )
 
-        # - load self.yaml
-        metadata: DTProjectV4.Meta = DTProjectV4.Meta(
-            self=DTProjectV4.SelfMeta.from_yaml_file(self_meta),
-            template=DTProjectV4.TemplateMeta.from_yaml_file(template_meta),
-            distro=DTProjectV4.DistroMeta.from_yaml_file(distro_meta),
+        # create layers object
+        layers: DTProjectV4.Layers = Layers(
+            self=DTProjectV4.LayerSelf.from_yaml_file(required_layers["self"]),
+            template=DTProjectV4.LayerTemplate.from_yaml_file(required_layers["template"]),
+            distro=DTProjectV4.LayerDistro.from_yaml_file(required_layers["distro"]),
+            base=DTProjectV4.LayerBase.from_yaml_file(required_layers["base"]),
+            **custom_layers
         )
 
         # ---
-        return metadata
+        return layers
 
     @classmethod
     def is_instance_of(cls, path: str) -> bool:
         try:
-            cls._get_project_info(path)
+            cls._load_layers(path)
         except Exception:
             return False
         return True
@@ -881,6 +925,10 @@ class DTProjectV1to3(DTProject):
     @property
     def metadata(self) -> Dict[str, str]:
         return copy.deepcopy(self._project_info)
+
+    @property
+    def layers(self) -> Dict[str, dict]:
+        raise NotImplementedError(f"Field 'layers' not implemented in DTProject v{self.type_version}")
 
     @staticmethod
     def _get_project_info(path: str):

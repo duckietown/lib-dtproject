@@ -12,7 +12,6 @@ from typing import Optional, List, Union, Set, cast
 
 import requests
 import yaml
-from dtproject.types import Layer, LayerSelf, LayerTemplate, LayerDistro, LayerBase, Recipes
 from requests import Response
 
 from dockertown import Image
@@ -28,9 +27,10 @@ from .exceptions import \
     NotFound
 
 from .constants import *
-from .recipe import get_recipe_project_dir, update_recipe, clone_recipe
+from .types import Layer, LayerSelf, LayerTemplate, LayerDistro, LayerBase, LayerRecipes
 from .utils.docker import docker_client
 from .utils.misc import run_cmd, git_remote_url_to_https, assert_canonical_arch
+from .recipe import get_recipe_project_dir, update_recipe, clone_recipe
 
 
 class DTProject:
@@ -44,13 +44,13 @@ class DTProject:
         template: LayerTemplate
         distro: LayerDistro
         base: LayerBase
-        recipes: Recipes = dataclasses.field(default_factory=Recipes.empty)
+        recipes: LayerRecipes = dataclasses.field(default_factory=LayerRecipes.empty)
 
         def as_dict(self) -> Dict[str, dict]:
             return dataclasses.asdict(self)
 
     REQUIRED_LAYERS = {"self": LayerSelf, "distro": LayerDistro, "base": LayerBase}
-    OPTIONAL_LAYERS = {"template": LayerTemplate, "recipes": Recipes}
+    OPTIONAL_LAYERS = {"template": LayerTemplate, "recipes": LayerRecipes}
     KNOWN_LAYERS = {**REQUIRED_LAYERS, **OPTIONAL_LAYERS}
 
     def __init__(self, path: str):

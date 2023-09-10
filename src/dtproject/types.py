@@ -1,10 +1,37 @@
 import dataclasses
-from typing import Optional
+from typing import Optional, TypeVar, Generic
 
 import yaml
 from dataclass_wizard import YAMLWizard
 
 from .constants import *
+
+
+T = TypeVar("T")
+
+
+class DictLayer(Generic[T], dict):
+    def __init__(self, given: bool, **kwargs):
+        self._are_given = given
+        super().__init__(**kwargs)
+
+    @property
+    def default(self) -> Optional[T]:
+        return self.get("default", None)
+
+    @property
+    def are_given(self) -> bool:
+        return self._are_given
+
+    @classmethod
+    def from_yaml_file(cls, path: str) -> 'DictLayer':
+        with open(path, "rt") as fin:
+            d: Dict[str, dict] = yaml.safe_load(fin)
+        return cls(given=True, **{n: Recipe(**r) for n, r in d.items()})
+
+    @classmethod
+    def empty(cls) -> 'DictLayer':
+        return cls(given=False)
 
 
 @dataclasses.dataclass
@@ -62,27 +89,13 @@ class Recipe:
     location: Optional[str] = None
 
 
-class Recipes(dict):
-    def __init__(self, given: bool, **kwargs):
-        self._are_given = given
-        super().__init__(**kwargs)
+class LayerRecipes(DictLayer[Recipe]):
+    pass
 
-    @property
-    def default(self) -> Optional[Recipe]:
-        return self.get("default", None)
 
-    @property
-    def are_given(self) -> bool:
-        return self._are_given
+class ContainerConfiguration(dict):
+    pass
 
-    @staticmethod
-    def from_yaml_file(path: str) -> 'Recipes':
-        with open(path, "rt") as fin:
-            recipes: Dict[str, dict] = yaml.safe_load(fin)
-        return Recipes(
-            given=True, **{n: Recipe(**r) for n, r in recipes.items()}
-        )
 
-    @staticmethod
-    def empty() -> 'Recipes':
-        return Recipes(given=False)
+class LayerContainers(DictLayer[ContainerConfiguration]):
+    pass

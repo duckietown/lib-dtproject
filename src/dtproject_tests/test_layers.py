@@ -1,7 +1,5 @@
 from typing import Dict
 
-from dtproject.dtproject import DTProjectV4
-
 from . import get_project_path, custom_layer, skip_if_code_mounted
 
 from dtproject import DTProject
@@ -37,7 +35,7 @@ class TestLayers(unittest.TestCase):
         pd = get_project_path("basic_v4")
         p = DTProject(pd)
         # ---
-        self.assertEqual(set(p.layers.keys()), set(DTProjectV4.REQUIRED_LAYERS))
+        self.assertEqual(set(p.layers.as_dict().keys()), set(DTProject.REQUIRED_LAYERS))
 
     @skip_if_code_mounted
     def test_custom_layers_layer(self):
@@ -52,7 +50,7 @@ class TestLayers(unittest.TestCase):
                 p = DTProject(pd)
                 # ---
                 self.assertEqual(
-                    p.layers,
+                    p.layers.as_dict(),
                     {
                         "distro": {"name": "ente"},
                         "self": {
@@ -80,6 +78,11 @@ class TestLayers(unittest.TestCase):
                         **layers,
                     },
                 )
-                # access custom layers
-                self.assertEqual(p.layers["web"], layers["web"])
-                self.assertEqual(p.layers["contributors"], layers["contributors"])
+                # access custom layers (via dataclass)
+                # noinspection PyUnresolvedReferences
+                self.assertEqual(p.layers.web, layers["web"])
+                # noinspection PyUnresolvedReferences
+                self.assertEqual(p.layers.contributors, layers["contributors"])
+                # access custom layers (via dict)
+                self.assertEqual(p.layers.as_dict()["web"], layers["web"])
+                self.assertEqual(p.layers.as_dict()["contributors"], layers["contributors"])

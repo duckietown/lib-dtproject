@@ -1,4 +1,4 @@
-from . import get_project_path, git_repository, readonly_filesystem, skip_if_code_mounted
+from . import get_project_path, git_repository, skip_if_code_mounted
 
 from dtproject import DTProject
 import unittest

@@ -8,11 +8,11 @@ from abc import abstractmethod
 from pathlib import Path
 from subprocess import CalledProcessError
 from types import SimpleNamespace
-from typing import Optional, List, Union, Set
+from typing import Optional, List, Union, Set, cast
 
 import requests
 import yaml
-from dataclass_wizard import YAMLWizard
+from dtproject.types import Layer, LayerSelf, LayerTemplate, LayerDistro, LayerBase, Recipes
 from requests import Response
 
 from dockertown import Image
@@ -39,57 +39,18 @@ class DTProject:
     """
 
     @dataclasses.dataclass
-    class Maintainer:
-        name: str
-        email: str
-        organization: Optional[str] = None
-
-        def __str__(self):
-            if self.organization:
-                return f"{self.name} @ {self.organization} ({self.email})"
-            return f"{self.name} ({self.email})"
-
-    @dataclasses.dataclass
-    class Layer(YAMLWizard):
-        pass
-
-    @dataclasses.dataclass
-    class LayerSelf(Layer):
-        name: str
-        maintainer: 'DTProject.Maintainer'
-        description: str
-        icon: str
-        version: str
-
-    @dataclasses.dataclass
-    class LayerTemplate(Layer):
-        name: str
-        version: str
-        provider: Optional[str] = "github.com"
-
-    @dataclasses.dataclass
-    class LayerDistro(Layer):
-        name: str
-
-    @dataclasses.dataclass
-    class LayerBase(Layer):
-        repository: str
-        registry: Optional[str] = None
-        organization: Optional[str] = None
-        tag: Optional[str] = None
-
-    @dataclasses.dataclass
     class Layers:
-        self: 'DTProject.LayerSelf'
-        template: 'DTProject.LayerTemplate'
-        distro: 'DTProject.LayerDistro'
-        base: 'DTProject.LayerBase'
+        self: LayerSelf
+        template: LayerTemplate
+        distro: LayerDistro
+        base: LayerBase
+        recipes: Recipes = dataclasses.field(default_factory=Recipes.empty)
 
         def as_dict(self) -> Dict[str, dict]:
             return dataclasses.asdict(self)
 
     REQUIRED_LAYERS = {"self": LayerSelf, "distro": LayerDistro, "base": LayerBase}
-    OPTIONAL_LAYERS = {"template": LayerTemplate}
+    OPTIONAL_LAYERS = {"template": LayerTemplate, "recipes": Recipes}
     KNOWN_LAYERS = {**REQUIRED_LAYERS, **OPTIONAL_LAYERS}
 
     def __init__(self, path: str):
@@ -123,6 +84,9 @@ class DTProject:
                 self.__class__ = DTProjectSubClass
                 # noinspection PyTypeChecker
                 DTProjectSubClass.__init__(self, path)
+                return
+        # if we are here, it means that this candidate project did not match any project version
+        raise DTProjectNotFound(f"No valid DTProject found at '{path}'")
 
     @property
     def path(self) -> str:
@@ -170,7 +134,7 @@ class DTProject:
 
     @property
     @abstractmethod
-    def layers(self) -> 'DTProject.Layers':
+    def layers(self) -> Layers:
         pass
 
     @property
@@ -819,8 +783,7 @@ class DTProjectV4(DTProject):
     def _load_layers(path: str) -> 'DTProject.Layers':
         if not os.path.exists(path):
             msg = f"The project path {path!r} does not exist."
-            raise OSError(msg)
-
+            raise DTProjectNotFound(msg)
         layers_dir: str = os.path.join(path, "dtproject")
         # if the directory 'dtproject' is missing
         if not os.path.exists(layers_dir):
@@ -831,7 +794,7 @@ class DTProjectV4(DTProject):
             msg = f"The path '{layers_dir}' must be a directory."
             raise MalformedDTProject(msg)
 
-        layers: Dict[str, Union[DTProject.Layer, dict]] = {}
+        layers: Dict[str, Union[Layer, dict]] = {}
 
         # load required layers
         for layer_name, layer_class in DTProject.REQUIRED_LAYERS.items():
@@ -867,7 +830,10 @@ class DTProjectV4(DTProject):
         # extend layers class
         Layers = dataclasses.make_dataclass(
             'ExtendedLayers',
-            fields=[(layer, dict) for layer in custom_layers],
+            fields=[
+                (layer, dict, cast(dataclasses.Field, dataclasses.field(default_factory=dict)))
+                for layer in custom_layers
+            ],
             bases=(DTProject.Layers,)
         )
         # ---
@@ -875,10 +841,16 @@ class DTProjectV4(DTProject):
 
     @classmethod
     def is_instance_of(cls, path: str) -> bool:
-        try:
-            cls._load_layers(path)
-        except Exception:
+        if not os.path.exists(path):
             return False
+        layers_dir: str = os.path.join(path, "dtproject")
+        # if the directory 'dtproject' is missing
+        if not os.path.exists(layers_dir):
+            return False
+        # if 'dtproject' is not a directory
+        if not os.path.isdir(layers_dir):
+            return False
+        # ---
         return True
 
 

@@ -1,5 +1,8 @@
 from typing import Dict
 
+from dtproject.constants import DUCKIETOWN, DEFAULT_DOCKER_REGISTRY
+from dtproject.types import Recipe
+
 from . import get_project_path, custom_layer, skip_if_code_mounted
 
 from dtproject import DTProject
@@ -38,7 +41,7 @@ class TestLayers(unittest.TestCase):
         self.assertEqual(set(p.layers.as_dict().keys()), set(DTProject.KNOWN_LAYERS))
 
     @skip_if_code_mounted
-    def test_custom_layers_layer(self):
+    def test_custom_layers(self):
         pname = "basic_v4"
         pd = get_project_path(pname)
         layers: Dict[str, dict] = {
@@ -70,11 +73,12 @@ class TestLayers(unittest.TestCase):
                             "version": "4",
                         },
                         "base": {
-                            "organization": None,
-                            "registry": None,
+                            "organization": DUCKIETOWN,
+                            "registry": DEFAULT_DOCKER_REGISTRY,
                             "repository": "dt-commons",
                             "tag": None,
                         },
+                        "recipes": {},
                         **layers,
                     },
                 )
@@ -86,3 +90,48 @@ class TestLayers(unittest.TestCase):
                 # access custom layers (via dict)
                 self.assertEqual(p.layers.as_dict()["web"], layers["web"])
                 self.assertEqual(p.layers.as_dict()["contributors"], layers["contributors"])
+
+    @skip_if_code_mounted
+    def test_recipe_layer_not_given(self):
+        pname = "basic_v4"
+        pd = get_project_path(pname)
+        p = DTProject(pd)
+        # make sure we know recipes were not given
+        self.assertFalse(p.layers.recipes.are_given)
+
+    @skip_if_code_mounted
+    def test_recipe_layer_given_empty(self):
+        pname = "basic_v4"
+        pd = get_project_path(pname)
+        recipes = {}
+        with custom_layer(pname, "recipes", recipes):
+            p = DTProject(pd)
+            # make sure we know recipes are given
+            self.assertTrue(p.layers.recipes.are_given)
+            # compare source recipes and loaded ones
+            self.assertEqual(p.layers.recipes, {})
+
+    @skip_if_code_mounted
+    def test_recipe_layer_default_only(self):
+        pname = "basic_v4"
+        pd = get_project_path(pname)
+        recipes = {
+            "default": {
+                "repository": "my-recipes",
+                "provider": "example.com",
+                "organization": "my_username",
+                "branch": "my_branch",
+                "location": "./my/recipes/",
+            }
+        }
+        with custom_layer(pname, "recipes", recipes):
+            p = DTProject(pd)
+            # make sure we know recipes are given
+            self.assertTrue(p.layers.recipes.are_given)
+            # access default
+            self.assertEqual(p.layers.recipes.default, Recipe(**recipes["default"]))
+            # compare source recipes and loaded ones
+            self.assertEqual(
+                p.layers.recipes,
+                {n: Recipe(**r) for n, r in recipes.items()},
+            )

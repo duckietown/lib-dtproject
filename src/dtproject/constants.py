@@ -38,6 +38,11 @@ CANONICAL_ARCH = {
     "aarch64": "arm64v8",
 }
 
+DEFAULT_GIT_PROVIDER = "github.com"
+DEFAULT_DOCKER_REGISTRY = "docker.io"
+DEFAULT_PROJECT_ICON = "square"
+DUCKIETOWN = "duckietown"
+
 BUILD_COMPATIBILITY_MAP = {"arm32v7": ["arm32v7"], "arm64v8": ["arm32v7", "arm64v8"], "amd64": ["amd64"]}
 
 DOCKER_LABEL_DOMAIN = "org.duckietown.label"

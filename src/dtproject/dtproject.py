@@ -38,6 +38,54 @@ class DTProject:
     Class representing a DTProject on disk.
     """
 
+    REQUIRED_LAYERS = ["self", "template", "distro", "base"]
+
+    @dataclasses.dataclass
+    class Maintainer(YAMLWizard):
+        name: str
+        email: str
+        organization: Optional[str] = None
+
+        def __str__(self):
+            if self.organization:
+                return f"{self.name} @ {self.organization} ({self.email})"
+            return f"{self.name} ({self.email})"
+
+    @dataclasses.dataclass
+    class LayerSelf(YAMLWizard):
+        name: str
+        maintainer: 'DTProject.Maintainer'
+        description: str
+        icon: str
+        version: str
+
+    @dataclasses.dataclass
+    class LayerTemplate(YAMLWizard):
+        name: str
+        version: str
+        provider: Optional[str] = "github.com"
+
+    @dataclasses.dataclass
+    class LayerDistro(YAMLWizard):
+        name: str
+
+    @dataclasses.dataclass
+    class LayerBase(YAMLWizard):
+        repository: str
+        registry: Optional[str] = None
+        organization: Optional[str] = None
+        tag: Optional[str] = None
+
+    @dataclasses.dataclass
+    class Layers(YAMLWizard):
+        self: 'DTProject.LayerSelf'
+        template: 'DTProject.LayerTemplate'
+        distro: 'DTProject.LayerDistro'
+        base: 'DTProject.LayerBase'
+
+        def as_dict(self) -> Dict[str, dict]:
+            return dataclasses.asdict(self)
+
     def __init__(self, path: str):
         self._adapters = []
         self._repository = None
@@ -116,12 +164,12 @@ class DTProject:
 
     @property
     @abstractmethod
-    def layers(self) -> Dict[str, dict]:
+    def layers(self) -> 'DTProject.Layers':
         pass
 
     @property
     @abstractmethod
-    def distro(self):
+    def distro(self) -> str:
         pass
 
     @property
@@ -704,55 +752,10 @@ class DTProjectV4(DTProject):
     Class representing a DTProject on disk.
     """
 
-    REQUIRED_LAYERS = ["self", "template", "distro", "base"]
-
-    @dataclasses.dataclass
-    class Maintainer(YAMLWizard):
-        name: str
-        email: str
-        organization: Optional[str] = None
-
-        def __str__(self):
-            if self.organization:
-                return f"{self.name} @ {self.organization} ({self.email})"
-            return f"{self.name} ({self.email})"
-
-    @dataclasses.dataclass
-    class LayerSelf(YAMLWizard):
-        name: str
-        maintainer: 'DTProjectV4.Maintainer'
-        description: str
-        icon: str
-        version: str
-
-    @dataclasses.dataclass
-    class LayerTemplate(YAMLWizard):
-        name: str
-        version: str
-        provider: Optional[str] = "github.com"
-
-    @dataclasses.dataclass
-    class LayerDistro(YAMLWizard):
-        name: str
-
-    @dataclasses.dataclass
-    class LayerBase(YAMLWizard):
-        repository: str
-        registry: Optional[str] = None
-        organization: Optional[str] = None
-        tag: Optional[str] = None
-
-    @dataclasses.dataclass
-    class Layers(YAMLWizard):
-        self: 'DTProjectV4.LayerSelf'
-        template: 'DTProjectV4.LayerTemplate'
-        distro: 'DTProjectV4.LayerDistro'
-        base: 'DTProjectV4.LayerBase'
-
     # noinspection PyMissingConstructor
     def __init__(self, path: str):
         # use `dtproject` adapter (required)
-        self._layers: DTProjectV4.Layers = self._load_layers(path)
+        self._layers: DTProject.Layers = self._load_layers(path)
         self._adapters.append("dtproject")
 
     @property
@@ -789,7 +792,7 @@ class DTProjectV4(DTProject):
         return self._layers.template.version
 
     @property
-    def distro(self):
+    def distro(self) -> str:
         return self._layers.distro.name
 
     @property
@@ -803,11 +806,11 @@ class DTProjectV4(DTProject):
         }
 
     @property
-    def layers(self) -> Dict[str, dict]:
-        return dataclasses.asdict(self._layers)
+    def layers(self) -> 'DTProject.Layers':
+        return self._layers
 
     @staticmethod
-    def _load_layers(path: str) -> 'DTProjectV4.Layers':
+    def _load_layers(path: str) -> 'DTProject.Layers':
         if not os.path.exists(path):
             msg = f"The project path {path!r} does not exist."
             raise OSError(msg)
@@ -824,7 +827,7 @@ class DTProjectV4(DTProject):
 
         # load required layers
         required_layers: Dict[str, str] = {}
-        for layer_name in DTProjectV4.REQUIRED_LAYERS:
+        for layer_name in DTProject.REQUIRED_LAYERS:
             # make sure the <layer>.yaml file is there
             layer_fpath: str = os.path.join(layers_dir, f"{layer_name}.yaml")
             if not os.path.exists(layer_fpath) or not os.path.isfile(layer_fpath):
@@ -837,7 +840,7 @@ class DTProjectV4(DTProject):
         layer_pattern = os.path.join(path, "dtproject", "*.yaml")
         for layer_fpath in glob.glob(layer_pattern):
             layer_name: str = Path(layer_fpath).stem
-            if layer_name not in DTProjectV4.REQUIRED_LAYERS:
+            if layer_name not in DTProject.REQUIRED_LAYERS:
                 with open(layer_fpath, "rt") as fin:
                     layer_content: dict = yaml.safe_load(fin) or {}
                     custom_layers[layer_name] = layer_content
@@ -846,15 +849,15 @@ class DTProjectV4(DTProject):
         Layers = dataclasses.make_dataclass(
             'ExtendedLayers',
             fields=[(layer, dict) for layer in custom_layers],
-            bases=(DTProjectV4.Layers,)
+            bases=(DTProject.Layers,)
         )
 
         # create layers object
-        layers: DTProjectV4.Layers = Layers(
-            self=DTProjectV4.LayerSelf.from_yaml_file(required_layers["self"]),
-            template=DTProjectV4.LayerTemplate.from_yaml_file(required_layers["template"]),
-            distro=DTProjectV4.LayerDistro.from_yaml_file(required_layers["distro"]),
-            base=DTProjectV4.LayerBase.from_yaml_file(required_layers["base"]),
+        layers: DTProject.Layers = Layers(
+            self=DTProject.LayerSelf.from_yaml_file(required_layers["self"]),
+            template=DTProject.LayerTemplate.from_yaml_file(required_layers["template"]),
+            distro=DTProject.LayerDistro.from_yaml_file(required_layers["distro"]),
+            base=DTProject.LayerBase.from_yaml_file(required_layers["base"]),
             **custom_layers
         )
 
@@ -919,7 +922,7 @@ class DTProjectV1to3(DTProject):
         return self._type_version
 
     @property
-    def distro(self):
+    def distro(self) -> str:
         return self._repository.branch.split("-")[0] if self._repository else "latest"
 
     @property
@@ -927,7 +930,7 @@ class DTProjectV1to3(DTProject):
         return copy.deepcopy(self._project_info)
 
     @property
-    def layers(self) -> Dict[str, dict]:
+    def layers(self) -> 'DTProject.Layers':
         raise NotImplementedError(f"Field 'layers' not implemented in DTProject v{self.type_version}")
 
     @staticmethod

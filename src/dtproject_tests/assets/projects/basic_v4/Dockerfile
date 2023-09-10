@@ -34,7 +34,14 @@ ARG TARGETARCH
 ARG TARGETVARIANT
 
 # check build arguments
-RUN dt-build-env-check "${REPO_NAME}" "${MAINTAINER}" "${DESCRIPTION}"
+RUN dt-args-check \
+    "REPO_NAME" "${REPO_NAME}" \
+    "DESCRIPTION" "${DESCRIPTION}" \
+    "MAINTAINER" "${MAINTAINER}" \
+    "ARCH" "${ARCH}" \
+    "DISTRO" "${DISTRO}" \
+    "DOCKER_REGISTRY" "${DOCKER_REGISTRY}" \
+    "BASE_IMAGE" "${BASE_IMAGE}"
 
 # define/create repository path
 ARG REPO_PATH="${SOURCE_DIR}/${REPO_NAME}"

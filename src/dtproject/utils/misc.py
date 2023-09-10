@@ -40,3 +40,8 @@ def canonical_arch(arch):
         )
     # ---
     return CANONICAL_ARCH[arch]
+
+
+def DEPRECATED(fcn):
+    """This is a decorator that does nothing, it is just used to label functions that are deprecated"""
+    return fcn

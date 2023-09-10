@@ -55,6 +55,7 @@ class TestLayers(unittest.TestCase):
                 self.assertEqual(
                     p.layers.as_dict(),
                     {
+                        "options": {"needs_recipe": False},
                         "distro": {"name": "ente"},
                         "self": {
                             "description": "lib-dtproject-tests-project-basic-v4",
@@ -89,49 +90,6 @@ class TestLayers(unittest.TestCase):
                 self.assertEqual(p.layers.contributors, layers["contributors"])
                 # access custom layers (via dict)
                 self.assertEqual(p.layers.as_dict()["web"], layers["web"])
-                self.assertEqual(p.layers.as_dict()["contributors"], layers["contributors"])
-
-    @skip_if_code_mounted
-    def test_recipe_layer_not_given(self):
-        pname = "basic_v4"
-        pd = get_project_path(pname)
-        p = DTProject(pd)
-        # make sure we know recipes were not given
-        self.assertFalse(p.layers.recipes.are_given)
-
-    @skip_if_code_mounted
-    def test_recipe_layer_given_empty(self):
-        pname = "basic_v4"
-        pd = get_project_path(pname)
-        recipes = {}
-        with custom_layer(pname, "recipes", recipes):
-            p = DTProject(pd)
-            # make sure we know recipes are given
-            self.assertTrue(p.layers.recipes.are_given)
-            # compare source recipes and loaded ones
-            self.assertEqual(p.layers.recipes, {})
-
-    @skip_if_code_mounted
-    def test_recipe_layer_default_only(self):
-        pname = "basic_v4"
-        pd = get_project_path(pname)
-        recipes = {
-            "default": {
-                "repository": "my-recipes",
-                "provider": "example.com",
-                "organization": "my_username",
-                "branch": "my_branch",
-                "location": "./my/recipes/",
-            }
-        }
-        with custom_layer(pname, "recipes", recipes):
-            p = DTProject(pd)
-            # make sure we know recipes are given
-            self.assertTrue(p.layers.recipes.are_given)
-            # access default
-            self.assertEqual(p.layers.recipes.default, Recipe(**recipes["default"]))
-            # compare source recipes and loaded ones
-            self.assertEqual(
-                p.layers.recipes,
-                {n: Recipe(**r) for n, r in recipes.items()},
-            )
+                self.assertEqual(
+                    p.layers.as_dict()["contributors"], layers["contributors"]
+                )

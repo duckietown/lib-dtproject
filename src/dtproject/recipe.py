@@ -3,6 +3,7 @@ import os
 import time
 
 import requests
+from dtproject.types import Recipe
 
 from . import logger
 from .exceptions import RecipeProjectNotFound, DTProjectError
@@ -20,36 +21,37 @@ def get_recipes_dir() -> str:
     return os.environ.get("DUCKIETOWN_RECIPES", default_recipes_dir)
 
 
-def get_recipe_repo_dir(repository: str, branch: str) -> str:
+def get_recipe_repo_dir(recipe: Recipe) -> str:
+    repository, branch = recipe.repository, recipe.branch
     return os.path.join(get_recipes_dir(), repository, branch)
 
 
-def get_recipe_project_dir(repository: str, branch: str, location: str) -> str:
-    return os.path.join(get_recipe_repo_dir(repository, branch), location.strip("/"))
+def get_recipe_project_dir(recipe: Recipe) -> str:
+    repository, location = recipe.repository, recipe.location
+    return os.path.join(get_recipe_repo_dir(recipe), location.strip("/"))
 
 
-def recipe_project_exists(repository: str, branch: str, location: str) -> bool:
-    recipe_dir: str = get_recipe_project_dir(repository, branch, location)
+def recipe_project_exists(recipe: Recipe) -> bool:
+    recipe_dir: str = get_recipe_project_dir(recipe)
     return os.path.exists(recipe_dir) and os.path.isdir(recipe_dir)
 
 
-def clone_recipe(repository: str, branch: str, location: str) -> bool:
+def clone_recipe(recipe: Recipe) -> bool:
     """
     Args:
-        repository: fully qualified name of the repo e.g. duckietown/mooc-exercises
-        branch: branch of recipe repo containing the recipe
-        location: location of exercise specific recipe
+        recipe: the recipe to clone
     """
-    recipe_dir: str = get_recipe_project_dir(repository, branch, location)
-    if recipe_project_exists(repository, branch, location):
+    repository, branch, provider = recipe.repository, recipe.branch, recipe.provider
+    recipe_dir: str = get_recipe_project_dir(recipe)
+    if recipe_project_exists(recipe):
         raise DTProjectError(f"Recipe already exists at '{recipe_dir}'")
 
     # Clone recipes repo into dt-shell root
     try:
-        repo_dir: str = get_recipe_repo_dir(repository, branch)
+        repo_dir: str = get_recipe_repo_dir(recipe)
         logger.info(f"Downloading recipes...")
         logger.debug(f"Downloading recipes into '{repo_dir}' ...")
-        remote_url: str = f"https://github.com/{repository}"
+        remote_url: str = f"https://{provider}/{repository}"
         run_cmd(["git", "clone", "-b", branch, "--recurse-submodules", remote_url, repo_dir])
         logger.info(f"Recipes downloaded!")
         return True
@@ -59,8 +61,9 @@ def clone_recipe(repository: str, branch: str, location: str) -> bool:
         return False
 
 
-def recipe_needs_update(repository: str, branch: str, location: str) -> bool:
-    recipe_dir: str = get_recipe_project_dir(repository, branch, location)
+def recipe_needs_update(recipe: Recipe) -> bool:
+    repository, branch = recipe.repository, recipe.branch
+    recipe_dir: str = get_recipe_project_dir(recipe)
     need_update = False
     # Get the current repo info
     commands_update_check_flag = os.path.join(recipe_dir, ".updates-check")
@@ -89,6 +92,7 @@ def recipe_needs_update(repository: str, branch: str, location: str) -> bool:
 
         # Get the remote sha from GitHub
         logger.info("Fetching remote SHA from github.com ...")
+        # TODO: this should be conditioned on the provider, we have github hard-coded instead
         remote_url: str = f"https://api.github.com/repos/{repository}/branches/{branch}"
         try:
             data: dict = requests.get(remote_url).json()
@@ -117,14 +121,15 @@ def touch_update_check_flag(recipe_dir: str) -> None:
         os.utime(commands_update_check_flag, None)
 
 
-def update_recipe(repository: str, branch: str, location: str) -> bool:
-    recipe_dir: str = get_recipe_project_dir(repository, branch, location)
-    if not recipe_project_exists(repository, branch, location):
+def update_recipe(recipe: Recipe) -> bool:
+    branch: str = recipe.branch
+    recipe_dir: str = get_recipe_project_dir(recipe)
+    if not recipe_project_exists(recipe):
         raise RecipeProjectNotFound(f"There is no existing recipe in '{recipe_dir}'.")
 
     # Check for recipe repo updates
     logger.info("Checking if the project's recipe needs to be updated...")
-    if recipe_needs_update(repository, branch, location):
+    if recipe_needs_update(recipe):
         logger.info("This project's recipe has available updates. Attempting to pull them.")
         logger.debug(f"Updating recipe '{recipe_dir}'...")
         wait_on_retry_secs = 4

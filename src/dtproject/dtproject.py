@@ -24,12 +24,13 @@ from .exceptions import \
     DTProjectNotFound, \
     MalformedDTProject, \
     UnsupportedDTProjectVersion, \
-    NotFound
+    NotFound, \
+    InconsistentDTProject
 
 from .constants import *
-from .types import Layer, LayerSelf, LayerTemplate, LayerDistro, LayerBase, LayerRecipes
+from .types import LayerSelf, LayerTemplate, LayerDistro, LayerBase, LayerRecipes, LayerOptions, Recipe, Layer
 from .utils.docker import docker_client
-from .utils.misc import run_cmd, git_remote_url_to_https, assert_canonical_arch
+from .utils.misc import run_cmd, git_remote_url_to_https, assert_canonical_arch, DEPRECATED
 from .recipe import get_recipe_project_dir, update_recipe, clone_recipe
 
 
@@ -41,19 +42,20 @@ class DTProject:
     @dataclasses.dataclass
     class Layers:
         self: LayerSelf
-        template: LayerTemplate
         distro: LayerDistro
         base: LayerBase
+        options: LayerOptions = dataclasses.field(default_factory=LayerOptions)
+        template: Optional[LayerTemplate] = None
         recipes: LayerRecipes = dataclasses.field(default_factory=LayerRecipes.empty)
 
         def as_dict(self) -> Dict[str, dict]:
             return dataclasses.asdict(self)
 
     REQUIRED_LAYERS = {"self": LayerSelf, "distro": LayerDistro, "base": LayerBase}
-    OPTIONAL_LAYERS = {"template": LayerTemplate, "recipes": LayerRecipes}
+    OPTIONAL_LAYERS = {"template": LayerTemplate, "recipes": LayerRecipes, "options": LayerOptions}
     KNOWN_LAYERS = {**REQUIRED_LAYERS, **OPTIONAL_LAYERS}
 
-    def __init__(self, path: str):
+    def __init__(self, path: str, recipe: Optional[str] = None):
         self._adapters = []
         self._repository = None
         # use `fs` adapter by default
@@ -83,7 +85,7 @@ class DTProject:
             if DTProjectSubClass.is_instance_of(path):
                 self.__class__ = DTProjectSubClass
                 # noinspection PyTypeChecker
-                DTProjectSubClass.__init__(self, path)
+                DTProjectSubClass.__init__(self, path, recipe=recipe)
                 return
         # if we are here, it means that this candidate project did not match any project version
         raise DTProjectNotFound(f"No valid DTProject found at '{path}'")
@@ -95,6 +97,21 @@ class DTProject:
     @property
     @abstractmethod
     def name(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def options(self) -> LayerOptions:
+        pass
+
+    @property
+    @abstractmethod
+    def base_info(self) -> LayerBase:
+        pass
+
+    @property
+    @abstractmethod
+    def template_info(self) -> LayerTemplate:
         pass
 
     @property
@@ -129,6 +146,7 @@ class DTProject:
 
     @property
     @abstractmethod
+    @DEPRECATED
     def metadata(self) -> Dict[str, str]:
         pass
 
@@ -141,6 +159,10 @@ class DTProject:
     @abstractmethod
     def distro(self) -> str:
         pass
+
+    @property
+    def needs_recipe(self) -> bool:
+        return self.options.needs_recipe
 
     @property
     def head_version(self):
@@ -172,8 +194,14 @@ class DTProject:
         return copy.copy(self._adapters)
 
     @property
-    def needs_recipe(self) -> bool:
-        return self.type == "template-exercise"
+    @abstractmethod
+    def recipes(self) -> Dict[str, Recipe]:
+        pass
+
+    @property
+    @abstractmethod
+    def recipe_info(self) -> Optional[Recipe]:
+        pass
 
     @property
     def recipe_dir(self) -> Optional[str]:
@@ -182,14 +210,7 @@ class DTProject:
         return (
             self._custom_recipe_dir
             if self._custom_recipe_dir
-            else get_recipe_project_dir(
-                # TODO: this should be using layers instead
-                self.metadata["RECIPE_REPOSITORY"],
-                # TODO: this should be using layers instead
-                self._recipe_version or self.metadata["RECIPE_BRANCH"],
-                # TODO: this should be using layers instead
-                self.metadata["RECIPE_LOCATION"],
-            )
+            else get_recipe_project_dir(self.recipe_info)
         )
 
     @property
@@ -279,14 +300,7 @@ class DTProject:
             return
         # clone the project specified recipe (if necessary)
         if not os.path.exists(self.recipe_dir):
-            cloned: bool = clone_recipe(
-                # TODO: this should be using layers instead
-                self.metadata["RECIPE_REPOSITORY"],
-                # TODO: this should be using layers instead
-                self._recipe_version or self.metadata["RECIPE_BRANCH"],
-                # TODO: this should be using layers instead
-                self.metadata["RECIPE_LOCATION"],
-            )
+            cloned: bool = clone_recipe(self.recipe_info)
             if not cloned:
                 raise RecipeProjectNotFound(f"Recipe repository could not be downloaded.")
         # make sure the recipe exists
@@ -299,14 +313,7 @@ class DTProject:
     def update_cached_recipe(self) -> bool:
         """Update recipe if not using custom given recipe"""
         if self.needs_recipe and not self._custom_recipe_dir:
-            return update_recipe(
-                # TODO: this should be using layers instead
-                self.metadata["RECIPE_REPOSITORY"],
-                # TODO: this should be using layers instead
-                self._recipe_version or self.metadata["RECIPE_BRANCH"],
-                # TODO: this should be using layers instead
-                self.metadata["RECIPE_LOCATION"],
-            )  # raises: UserError if the recipe has not been cloned
+            return update_recipe(self.recipe_info)  # raises: UserError if the recipe has not been cloned
         return False
 
     def is_release(self):
@@ -723,19 +730,45 @@ class DTProjectV4(DTProject):
     """
 
     # noinspection PyMissingConstructor
-    def __init__(self, path: str):
+    def __init__(self, path: str, recipe: Optional[str] = None):
         # use `dtproject` adapter (required)
         self._layers: DTProject.Layers = self._load_layers(path)
         self._adapters.append("dtproject")
+        # consistency checks
+        # - we need recipes but none are given
+        if self.needs_recipe and self._layers.recipes.is_empty:
+            raise InconsistentDTProject("The project is set to need a recipe (options.needs_recipe=True) but "
+                                        "no recipes are defined in the recipes layer.")
+        # - we don't need recipes but some are given
+        if not self.needs_recipe and not self._layers.recipes.is_empty:
+            raise InconsistentDTProject("The project is set NOT to need a recipe "
+                                        f"(options.needs_recipe=False) but {len(self._layers.recipes)} "
+                                        f"recipes are defined in the recipes layer.")
+        # - choose a recipe when the project does not need it
+        if not self.needs_recipe and recipe is not None:
+            raise ValueError(f"Cannot select recipe '{recipe}' on a project that is set NOT to need a recipe "
+                             "(options.needs_recipe=False)")
+        # - (named) recipe selector
+        self._selected_recipe: Optional[str] = None if not self.needs_recipe else (recipe or "default")
+        if self._selected_recipe and not self._layers.recipes.has(self._selected_recipe):
+            raise ValueError(f"Recipe '{self._selected_recipe}' not defined in this project. Available "
+                             f"recipes are: {list(self.recipes.keys())}")
 
     @property
     def name(self) -> str:
-        # a name in the 'self' layer takes precedence, fallback to repository name then directory name
-        return (
-            self._layers.self.name or
-            (self._repository.name if (self._repository and self._repository.name) else
-             os.path.basename(self.path))
-        ).lower()
+        return self._layers.self.name.lower()
+
+    @property
+    def options(self) -> LayerOptions:
+        return self._layers.options
+
+    @property
+    def base_info(self) -> LayerBase:
+        return self._layers.base
+
+    @property
+    def template_info(self) -> LayerTemplate:
+        return self._layers.template
 
     @property
     def description(self) -> str:
@@ -778,6 +811,21 @@ class DTProjectV4(DTProject):
     @property
     def layers(self) -> 'DTProject.Layers':
         return self._layers
+
+    @property
+    def recipes(self) -> Dict[str, Recipe]:
+        return self._layers.recipes
+
+    @property
+    def recipe_info(self) -> Optional[Recipe]:
+        if not self.needs_recipe:
+            return None
+        # we already checked that this exists
+        recipe: Recipe = self._layers.recipes.get(self._selected_recipe).copy()
+        # apply runtime changes
+        if self._recipe_version:
+            recipe.branch = self._recipe_version
+        return recipe
 
     @staticmethod
     def _load_layers(path: str) -> 'DTProject.Layers':
@@ -860,7 +908,7 @@ class DTProjectV1to3(DTProject):
     """
 
     # noinspection PyMissingConstructor
-    def __init__(self, path: str):
+    def __init__(self, path: str, **_):
         # use `dtproject` adapter (required)
         self._project_info = self._get_project_info(path)
         self._type = self._project_info["TYPE"]
@@ -877,6 +925,20 @@ class DTProjectV1to3(DTProject):
             self._repository.name if (self._repository and self._repository.name) else
             os.path.basename(self.path)
         ).lower()
+
+    @property
+    def options(self) -> LayerOptions:
+        return LayerOptions(
+            needs_recipe=(self.type == "template-exercise")
+        )
+
+    @property
+    def base_info(self) -> LayerBase:
+        raise NotImplementedError(f"Field 'base' not implemented in DTProject v{self.type_version}")
+
+    @property
+    def template_info(self) -> LayerTemplate:
+        raise NotImplementedError(f"Field 'template' not implemented in DTProject v{self.type_version}")
 
     @property
     def description(self) -> str:
@@ -913,6 +975,25 @@ class DTProjectV1to3(DTProject):
     @property
     def layers(self) -> 'DTProject.Layers':
         raise NotImplementedError(f"Field 'layers' not implemented in DTProject v{self.type_version}")
+
+    @property
+    def recipe_info(self) -> Optional[Recipe]:
+        if not self.needs_recipe:
+            return None
+        organization, repository = self.metadata["RECIPE_REPOSITORY"].split("/")
+        return Recipe(
+            repository=repository,
+            organization=organization,
+            branch=self._recipe_version or self.metadata["RECIPE_BRANCH"],
+            location=self.metadata["RECIPE_LOCATION"],
+        )
+
+    @property
+    def recipes(self) -> Dict[str, Recipe]:
+        recipes = {}
+        if self.needs_recipe:
+            recipes["default"] = self.recipe_info
+        return recipes
 
     @staticmethod
     def _get_project_info(path: str):

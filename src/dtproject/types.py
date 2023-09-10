@@ -10,7 +10,11 @@ from .constants import *
 T = TypeVar("T")
 
 
-class DictLayer(Generic[T], dict):
+class Layer:
+    pass
+
+
+class DictLayer(Layer, Generic[T], dict):
     def __init__(self, given: bool, **kwargs):
         self._are_given = given
         super().__init__(**kwargs)
@@ -23,6 +27,13 @@ class DictLayer(Generic[T], dict):
     def are_given(self) -> bool:
         return self._are_given
 
+    @property
+    def is_empty(self) -> bool:
+        return dict.__len__(self) <= 0
+
+    def has(self, recipe: str) -> bool:
+        return recipe in self
+
     @classmethod
     def from_yaml_file(cls, path: str) -> 'DictLayer':
         with open(path, "rt") as fin:
@@ -32,6 +43,16 @@ class DictLayer(Generic[T], dict):
     @classmethod
     def empty(cls) -> 'DictLayer':
         return cls(given=False)
+
+
+@dataclasses.dataclass
+class DataClassLayer(YAMLWizard, Layer):
+    pass
+
+
+@dataclasses.dataclass
+class LayerOptions(DataClassLayer):
+    needs_recipe: bool = False
 
 
 @dataclasses.dataclass
@@ -47,12 +68,7 @@ class Maintainer:
 
 
 @dataclasses.dataclass
-class Layer(YAMLWizard):
-    pass
-
-
-@dataclasses.dataclass
-class LayerSelf(Layer):
+class LayerSelf(DataClassLayer):
     name: str
     maintainer: Maintainer
     description: str
@@ -61,19 +77,19 @@ class LayerSelf(Layer):
 
 
 @dataclasses.dataclass
-class LayerTemplate(Layer):
+class LayerTemplate(DataClassLayer):
     name: str
     version: str
     provider: str = DEFAULT_GIT_PROVIDER
 
 
 @dataclasses.dataclass
-class LayerDistro(Layer):
+class LayerDistro(DataClassLayer):
     name: str
 
 
 @dataclasses.dataclass
-class LayerBase(Layer):
+class LayerBase(DataClassLayer):
     repository: str
     registry: str = DEFAULT_DOCKER_REGISTRY
     organization: str = DUCKIETOWN
@@ -83,10 +99,13 @@ class LayerBase(Layer):
 @dataclasses.dataclass
 class Recipe:
     repository: str
+    branch: str
     provider: str = DEFAULT_GIT_PROVIDER
     organization: str = DUCKIETOWN
-    branch: Optional[str] = None
     location: Optional[str] = None
+
+    def copy(self) -> 'Recipe':
+        return Recipe(**dataclasses.asdict(self))
 
 
 class LayerRecipes(DictLayer[Recipe]):

@@ -3,6 +3,7 @@ __all__ = [
     "RecipeProjectNotFound",
     "DTProjectNotFound",
     "MalformedDTProject",
+    "InconsistentDTProject",
     "UnsupportedDTProjectVersion",
     "NotFound",
 ]
@@ -21,6 +22,10 @@ class DTProjectNotFound(DTProjectError):
 
 
 class MalformedDTProject(DTProjectError):
+    pass
+
+
+class InconsistentDTProject(DTProjectError):
     pass
 
 

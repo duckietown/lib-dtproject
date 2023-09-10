@@ -11,7 +11,7 @@
         },
         "organization": {
             "type": "string",
-            "description": "Organization name owning the base image (e.g., duckietown)",
+            "description": "Organization owning the base image (e.g., duckietown)",
             "default": "duckietown"
         },
         "repository": {

@@ -8,7 +8,7 @@ from abc import abstractmethod
 from pathlib import Path
 from subprocess import CalledProcessError
 from types import SimpleNamespace
-from typing import Optional, List
+from typing import Optional, List, Union, Set
 
 import requests
 import yaml
@@ -38,10 +38,8 @@ class DTProject:
     Class representing a DTProject on disk.
     """
 
-    REQUIRED_LAYERS = ["self", "template", "distro", "base"]
-
     @dataclasses.dataclass
-    class Maintainer(YAMLWizard):
+    class Maintainer:
         name: str
         email: str
         organization: Optional[str] = None
@@ -52,7 +50,11 @@ class DTProject:
             return f"{self.name} ({self.email})"
 
     @dataclasses.dataclass
-    class LayerSelf(YAMLWizard):
+    class Layer(YAMLWizard):
+        pass
+
+    @dataclasses.dataclass
+    class LayerSelf(Layer):
         name: str
         maintainer: 'DTProject.Maintainer'
         description: str
@@ -60,24 +62,24 @@ class DTProject:
         version: str
 
     @dataclasses.dataclass
-    class LayerTemplate(YAMLWizard):
+    class LayerTemplate(Layer):
         name: str
         version: str
         provider: Optional[str] = "github.com"
 
     @dataclasses.dataclass
-    class LayerDistro(YAMLWizard):
+    class LayerDistro(Layer):
         name: str
 
     @dataclasses.dataclass
-    class LayerBase(YAMLWizard):
+    class LayerBase(Layer):
         repository: str
         registry: Optional[str] = None
         organization: Optional[str] = None
         tag: Optional[str] = None
 
     @dataclasses.dataclass
-    class Layers(YAMLWizard):
+    class Layers:
         self: 'DTProject.LayerSelf'
         template: 'DTProject.LayerTemplate'
         distro: 'DTProject.LayerDistro'
@@ -85,6 +87,10 @@ class DTProject:
 
         def as_dict(self) -> Dict[str, dict]:
             return dataclasses.asdict(self)
+
+    REQUIRED_LAYERS = {"self": LayerSelf, "distro": LayerDistro, "base": LayerBase}
+    OPTIONAL_LAYERS = {"template": LayerTemplate}
+    KNOWN_LAYERS = {**REQUIRED_LAYERS, **OPTIONAL_LAYERS}
 
     def __init__(self, path: str):
         self._adapters = []
@@ -825,25 +831,38 @@ class DTProjectV4(DTProject):
             msg = f"The path '{layers_dir}' must be a directory."
             raise MalformedDTProject(msg)
 
+        layers: Dict[str, Union[DTProject.Layer, dict]] = {}
+
         # load required layers
-        required_layers: Dict[str, str] = {}
-        for layer_name in DTProject.REQUIRED_LAYERS:
+        for layer_name, layer_class in DTProject.REQUIRED_LAYERS.items():
             # make sure the <layer>.yaml file is there
             layer_fpath: str = os.path.join(layers_dir, f"{layer_name}.yaml")
             if not os.path.exists(layer_fpath) or not os.path.isfile(layer_fpath):
                 msg = f"The file '{layer_fpath}' is missing."
                 raise MalformedDTProject(msg)
-            required_layers[layer_name] = layer_fpath
+            layers[layer_name] = layer_class.from_yaml_file(layer_fpath)
+
+        # load optional (but known) layers
+        for layer_name, layer_class in DTProject.OPTIONAL_LAYERS.items():
+            # load the <layer>.yaml file if it is there
+            layer_fpath: str = os.path.join(layers_dir, f"{layer_name}.yaml")
+            if not os.path.exists(layer_fpath):
+                continue
+            if not os.path.isfile(layer_fpath):
+                msg = f"The path '{layer_fpath}' must be a regular file."
+                raise MalformedDTProject(msg)
+            layers[layer_name] = layer_class.from_yaml_file(layer_fpath)
 
         # load custom layers
-        custom_layers: Dict[str, dict] = {}
+        custom_layers: Set[str] = set()
         layer_pattern = os.path.join(path, "dtproject", "*.yaml")
         for layer_fpath in glob.glob(layer_pattern):
             layer_name: str = Path(layer_fpath).stem
-            if layer_name not in DTProject.REQUIRED_LAYERS:
+            if layer_name not in DTProject.KNOWN_LAYERS:
                 with open(layer_fpath, "rt") as fin:
                     layer_content: dict = yaml.safe_load(fin) or {}
-                    custom_layers[layer_name] = layer_content
+                    layers[layer_name] = layer_content
+                    custom_layers.add(layer_name)
 
         # extend layers class
         Layers = dataclasses.make_dataclass(
@@ -851,18 +870,8 @@ class DTProjectV4(DTProject):
             fields=[(layer, dict) for layer in custom_layers],
             bases=(DTProject.Layers,)
         )
-
-        # create layers object
-        layers: DTProject.Layers = Layers(
-            self=DTProject.LayerSelf.from_yaml_file(required_layers["self"]),
-            template=DTProject.LayerTemplate.from_yaml_file(required_layers["template"]),
-            distro=DTProject.LayerDistro.from_yaml_file(required_layers["distro"]),
-            base=DTProject.LayerBase.from_yaml_file(required_layers["base"]),
-            **custom_layers
-        )
-
         # ---
-        return layers
+        return Layers(**layers)
 
     @classmethod
     def is_instance_of(cls, path: str) -> bool:

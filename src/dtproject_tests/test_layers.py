@@ -35,7 +35,7 @@ class TestLayers(unittest.TestCase):
         pd = get_project_path("basic_v4")
         p = DTProject(pd)
         # ---
-        self.assertEqual(set(p.layers.as_dict().keys()), set(DTProject.REQUIRED_LAYERS))
+        self.assertEqual(set(p.layers.as_dict().keys()), set(DTProject.KNOWN_LAYERS))
 
     @skip_if_code_mounted
     def test_custom_layers_layer(self):

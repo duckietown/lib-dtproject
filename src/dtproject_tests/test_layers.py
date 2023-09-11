@@ -1,7 +1,6 @@
 from typing import Dict
 
 from dtproject.constants import DUCKIETOWN, DEFAULT_DOCKER_REGISTRY
-from dtproject.types import Recipe
 
 from . import get_project_path, custom_layer, skip_if_code_mounted
 
@@ -55,6 +54,7 @@ class TestLayers(unittest.TestCase):
                 self.assertEqual(
                     p.layers.as_dict(),
                     {
+                        "format": {"version": 4},
                         "options": {"needs_recipe": False},
                         "distro": {"name": "ente"},
                         "self": {

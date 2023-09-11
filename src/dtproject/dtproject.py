@@ -28,7 +28,7 @@ from .exceptions import \
     InconsistentDTProject
 
 from .constants import *
-from .types import LayerSelf, LayerTemplate, LayerDistro, LayerBase, LayerRecipes, LayerOptions, Recipe, Layer
+from .types import LayerSelf, LayerTemplate, LayerDistro, LayerBase, LayerRecipes, LayerOptions, Recipe, Layer, LayerFormat
 from .utils.docker import docker_client
 from .utils.misc import run_cmd, git_remote_url_to_https, assert_canonical_arch, DEPRECATED
 from .recipe import get_recipe_project_dir, update_recipe, clone_recipe
@@ -41,6 +41,7 @@ class DTProject:
 
     @dataclasses.dataclass
     class Layers:
+        format: LayerFormat
         self: LayerSelf
         distro: LayerDistro
         base: LayerBase
@@ -51,7 +52,7 @@ class DTProject:
         def as_dict(self) -> Dict[str, dict]:
             return dataclasses.asdict(self)
 
-    REQUIRED_LAYERS = {"self": LayerSelf, "distro": LayerDistro, "base": LayerBase}
+    REQUIRED_LAYERS = {"format": LayerFormat, "self": LayerSelf, "distro": LayerDistro, "base": LayerBase}
     OPTIONAL_LAYERS = {"template": LayerTemplate, "recipes": LayerRecipes, "options": LayerOptions}
     KNOWN_LAYERS = {**REQUIRED_LAYERS, **OPTIONAL_LAYERS}
 
@@ -81,7 +82,7 @@ class DTProject:
             )
             self._adapters.append("git")
         # at this point we initialize the proper subclass
-        for DTProjectSubClass in [DTProjectV1to3, DTProjectV4]:
+        for DTProjectSubClass in [DTProjectV1, DTProjectV2, DTProjectV3, DTProjectV4]:
             if DTProjectSubClass.is_instance_of(path):
                 self.__class__ = DTProjectSubClass
                 # noinspection PyTypeChecker
@@ -97,6 +98,11 @@ class DTProject:
     @property
     @abstractmethod
     def name(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def format(self) -> LayerFormat:
         pass
 
     @property
@@ -759,6 +765,10 @@ class DTProjectV4(DTProject):
         return self._layers.self.name.lower()
 
     @property
+    def format(self) -> LayerFormat:
+        return self._layers.format
+
+    @property
     def options(self) -> LayerOptions:
         return self._layers.options
 
@@ -917,6 +927,11 @@ class DTProjectV1to3(DTProject):
         self._adapters.append("dtproject")
 
     @property
+    @abstractmethod
+    def format(self) -> LayerFormat:
+        pass
+
+    @property
     def name(self) -> str:
         return self._project_info.get(
             # a name defined in the dtproject descriptor takes precedence
@@ -1051,3 +1066,53 @@ class DTProjectV1to3(DTProject):
         except Exception:
             return False
         return True
+
+
+# noinspection PyAbstractClass
+class DTProjectV1(DTProjectV1to3):
+
+    @property
+    def format(self) -> LayerFormat:
+        return LayerFormat(version=1)
+
+    @classmethod
+    def is_instance_of(cls, path: str) -> bool:
+        try:
+            DTProjectV1to3._get_project_info(path)
+        except Exception:
+            return False
+        return os.path.isfile(os.path.join(path, "launch.sh")) and os.path.isdir(os.path.join(path, "code"))
+
+
+# noinspection PyAbstractClass
+class DTProjectV2(DTProjectV1to3):
+
+    @property
+    def format(self) -> LayerFormat:
+        return LayerFormat(version=2)
+
+    @classmethod
+    def is_instance_of(cls, path: str) -> bool:
+        try:
+            DTProjectV1to3._get_project_info(path)
+        except Exception:
+            return False
+        return os.path.isfile(os.path.join(path, ".dtproject")) and \
+               not os.path.isfile(os.path.join(path, "dependencies-py3.dt.txt"))
+
+
+# noinspection PyAbstractClass
+class DTProjectV3(DTProjectV1to3):
+
+    @property
+    def format(self) -> LayerFormat:
+        return LayerFormat(version=3)
+
+    @classmethod
+    def is_instance_of(cls, path: str) -> bool:
+        try:
+            DTProjectV1to3._get_project_info(path)
+        except Exception:
+            return False
+        return os.path.isfile(os.path.join(path, ".dtproject")) and \
+               os.path.isfile(os.path.join(path, "dependencies-py3.dt.txt"))

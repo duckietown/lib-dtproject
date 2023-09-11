@@ -51,6 +51,11 @@ class DataClassLayer(YAMLWizard, Layer):
 
 
 @dataclasses.dataclass
+class LayerFormat(DataClassLayer):
+    version: int
+
+
+@dataclasses.dataclass
 class LayerOptions(DataClassLayer):
     needs_recipe: bool = False
 

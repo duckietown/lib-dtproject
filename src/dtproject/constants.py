@@ -61,6 +61,10 @@ DISTRO_KEY = {"1": "MAJOR", "2": "DISTRO", "3": "DISTRO", "4": "DISTRO"}
 TEMPLATE_TO_SRC: Dict[ProjectType,
                       Dict[ProjectTypeVersion,
                            Callable[[ProjectName], Tuple[RelativePath, ContainerPath]]]] = {
+    # no template, nothing to mount
+    None: {
+        "0": None
+    },
     # NOTE: these are not templates, they only serve the project matching their names
     "dt-commons": {
         "1": lambda _repo: ("code", "/packages/{:s}/".format(_repo)),
@@ -102,6 +106,10 @@ TEMPLATE_TO_SRC: Dict[ProjectType,
 TEMPLATE_TO_LAUNCHFILE: Dict[ProjectType,
                              Dict[ProjectTypeVersion,
                                   Callable[[ProjectName], Tuple[RelativePath, ContainerPath]]]] = {
+    # no template, nothing to mount
+    None: {
+        "0": None
+    },
     # NOTE: these are not templates, they only serve the project matching their names
     "dt-commons": {
         "1": lambda _repo: ("launch.sh", "/launch/{:s}/launch.sh".format(_repo)),
@@ -139,6 +147,10 @@ TEMPLATE_TO_LAUNCHFILE: Dict[ProjectType,
 TEMPLATE_TO_ASSETS: Dict[ProjectType,
                          Dict[ProjectTypeVersion,
                               Callable[[ProjectName], Tuple[RelativePath, ContainerPath]]]] = {
+    # no template, nothing to mount
+    None: {
+        "0": None
+    },
     "template-exercise-recipe": {
         "3": lambda _repo: ("assets/*", "/code/catkin_ws/src/{:s}/assets".format(_repo))
     },
@@ -149,6 +161,10 @@ TEMPLATE_TO_ASSETS: Dict[ProjectType,
 
 TEMPLATE_TO_DOCS: Dict[ProjectType,
                        Dict[ProjectTypeVersion, RelativePath]] = {
+    # no template, nothing to mount
+    None: {
+        "0": None
+    },
     # NOTE: these are not templates, they only serve the project matching their names
     "dt-commons": {
         # versions 1-3 are not supported by this library

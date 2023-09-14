@@ -83,7 +83,7 @@ class LayerSelf(DataClassLayer):
 
 @dataclasses.dataclass
 class LayerTemplate(DataClassLayer):
-    name: str
+    name: Optional[str]
     version: str
     provider: str = DEFAULT_GIT_PROVIDER
 

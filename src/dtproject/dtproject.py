@@ -8,7 +8,7 @@ from abc import abstractmethod
 from pathlib import Path
 from subprocess import CalledProcessError
 from types import SimpleNamespace
-from typing import Optional, List, Union, Set, cast
+from typing import Optional, List, Union, Set, cast, Any
 
 import requests
 import yaml
@@ -142,7 +142,7 @@ class DTProject:
 
     @property
     @abstractmethod
-    def type(self) -> str:
+    def type(self) -> Optional[str]:
         pass
 
     @property
@@ -165,6 +165,10 @@ class DTProject:
     @abstractmethod
     def distro(self) -> str:
         pass
+
+    @property
+    def build_args(self) -> Dict[str, Any]:
+        return {}
 
     @property
     def needs_recipe(self) -> bool:
@@ -490,10 +494,14 @@ class DTProject:
                 )
             )
         # ---
+        template_src: Optional[Callable] = TEMPLATE_TO_SRC[self.type][self.type_version]
+        # no template, no known code
+        if template_src is None:
+            return [], []
         # root is either a custom given root (remote mounting) or the project path
         root: str = os.path.abspath(root or self.path).rstrip("/")
         # local and destination are fixed given project type and version
-        local, destination = TEMPLATE_TO_SRC[self.type][self.type_version](self.name)
+        local, destination = template_src(self.name)
         # 'local' can be a pattern
         if local.endswith("*"):
             # resolve 'local' with respect to the project path
@@ -513,22 +521,24 @@ class DTProject:
         # ---
         return locals, destinations
 
-    def launch_paths(self, root: Optional[str] = None) -> Tuple[str, str]:
+    def launch_paths(self, root: Optional[str] = None) -> Tuple[List[str], List[str]]:
         # make sure we support this project version
-        if (
-                self.type not in TEMPLATE_TO_LAUNCHFILE
-                or self.type_version not in TEMPLATE_TO_LAUNCHFILE[self.type]
-        ):
+        if self.type not in TEMPLATE_TO_LAUNCHFILE or \
+                self.type_version not in TEMPLATE_TO_LAUNCHFILE[self.type]:
             raise UnsupportedDTProjectVersion(
                 f"Template {self.type} v{self.type_version} for project {self.path} not supported"
             )
         # ---
+        template_launch: Optional[Callable] = TEMPLATE_TO_LAUNCHFILE[self.type][self.type_version]
+        # no template, no known launchers
+        if template_launch is None:
+            return [], []
         # root is either a custom given root (remote mounting) or the project path
         root: str = os.path.abspath(root or self.path).rstrip("/")
-        src, dst = TEMPLATE_TO_LAUNCHFILE[self.type][self.type_version](self.name)
+        src, dst = template_launch(self.name)
         src = os.path.join(root, src)
         # ---
-        return src, dst
+        return [src], [dst]
 
     def assets_paths(self, root: Optional[str] = None) -> Tuple[List[str], List[str]]:
         # make sure we support this project version
@@ -539,10 +549,14 @@ class DTProject:
                 )
             )
         # ---
+        template_assets: Optional[Callable] = TEMPLATE_TO_ASSETS[self.type][self.type_version]
+        # no template, no known assets path
+        if template_assets is None:
+            return [], []
         # root is either a custom given root (remote mounting) or the project path
         root: str = os.path.abspath(root or self.path).rstrip("/")
         # local and destination are fixed given project type and version
-        local, destination = TEMPLATE_TO_ASSETS[self.type][self.type_version](self.name)
+        local, destination = template_assets(self.name)
         # 'local' can be a pattern
         if local.endswith("*"):
             # resolve 'local' with respect to the project path
@@ -562,7 +576,7 @@ class DTProject:
         # ---
         return locals, destinations
 
-    def docs_path(self) -> str:
+    def docs_path(self) -> Optional[str]:
         # make sure we support this project version
         if self.type not in TEMPLATE_TO_DOCS or self.type_version not in TEMPLATE_TO_DOCS[self.type]:
             raise UnsupportedDTProjectVersion(
@@ -571,7 +585,12 @@ class DTProject:
                 )
             )
         # ---
-        return os.path.join(self.path, TEMPLATE_TO_DOCS[self.type][self.type_version])
+        template_docs: Optional[str] = TEMPLATE_TO_DOCS[self.type][self.type_version]
+        # no template, no known docs
+        if template_docs is None:
+            return None
+        # ---
+        return os.path.join(self.path, template_docs)
 
     def image_metadata(self, endpoint, arch: str, owner: str, registry: str, version: str):
         client = docker_client(endpoint)
@@ -807,6 +826,18 @@ class DTProjectV4(DTProject):
     @property
     def distro(self) -> str:
         return self._layers.distro.name
+
+    @property
+    def build_args(self) -> Dict[str, str]:
+        return {
+            "DISTRO": self.distro,
+            "PROJECT_FORMAT_VERSION": self.format.version,
+            "PROJECT_NAME": self.name,
+            "PROJECT_DESCRIPTION": self.description,
+            "PROJECT_MAINTAINER": self.maintainer,
+            "PROJECT_ICON": self.icon,
+            "BASE_REPOSITORY": self.base_info.repository,
+        }
 
     @property
     def metadata(self) -> dict:

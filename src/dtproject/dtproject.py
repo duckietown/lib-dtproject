@@ -829,7 +829,7 @@ class DTProjectV4(DTProject):
 
     @property
     def build_args(self) -> Dict[str, str]:
-        return {
+        bargs = {
             "DISTRO": self.distro,
             "PROJECT_FORMAT_VERSION": self.format.version,
             "PROJECT_NAME": self.name,
@@ -838,6 +838,10 @@ class DTProjectV4(DTProject):
             "PROJECT_ICON": self.icon,
             "BASE_REPOSITORY": self.base_info.repository,
         }
+        if self.base_info.tag is not None:
+            bargs["BASE_TAG"] = self.base_info.tag
+        # ---
+        return bargs
 
     @property
     def metadata(self) -> dict:

@@ -28,7 +28,7 @@ from .exceptions import \
     InconsistentDTProject
 
 from .constants import *
-from .types import LayerSelf, LayerTemplate, LayerDistro, LayerBase, LayerRecipes, LayerOptions, Recipe, Layer, LayerFormat
+from .types import LayerSelf, LayerTemplate, LayerDistro, LayerBase, LayerRecipes, LayerOptions, Recipe, Layer, LayerFormat, LayerContainers, LayerDevContainers
 from .utils.docker import docker_client
 from .utils.misc import run_cmd, git_remote_url_to_https, assert_canonical_arch, DEPRECATED
 from .recipe import get_recipe_project_dir, update_recipe, clone_recipe
@@ -48,12 +48,20 @@ class DTProject:
         options: LayerOptions = dataclasses.field(default_factory=LayerOptions)
         template: Optional[LayerTemplate] = None
         recipes: LayerRecipes = dataclasses.field(default_factory=LayerRecipes.empty)
+        containers: LayerContainers = dataclasses.field(default_factory=LayerContainers.empty)
+        devcontainers: LayerDevContainers = dataclasses.field(default_factory=LayerDevContainers.empty)
 
         def as_dict(self) -> Dict[str, dict]:
             return dataclasses.asdict(self)
 
     REQUIRED_LAYERS = {"format": LayerFormat, "self": LayerSelf, "distro": LayerDistro, "base": LayerBase}
-    OPTIONAL_LAYERS = {"template": LayerTemplate, "recipes": LayerRecipes, "options": LayerOptions}
+    OPTIONAL_LAYERS = {
+        "template": LayerTemplate,
+        "recipes": LayerRecipes,
+        "options": LayerOptions,
+        "containers": LayerContainers,
+        "devcontainers": LayerDevContainers,
+    }
     KNOWN_LAYERS = {**REQUIRED_LAYERS, **OPTIONAL_LAYERS}
 
     def __init__(self, path: str, recipe: Optional[str] = None):
@@ -118,6 +126,16 @@ class DTProject:
     @property
     @abstractmethod
     def template_info(self) -> LayerTemplate:
+        pass
+
+    @property
+    @abstractmethod
+    def containers(self) -> LayerContainers:
+        pass
+
+    @property
+    @abstractmethod
+    def devcontainers(self) -> LayerDevContainers:
         pass
 
     @property
@@ -800,6 +818,14 @@ class DTProjectV4(DTProject):
         return self._layers.template
 
     @property
+    def containers(self) -> LayerContainers:
+        return self._layers.containers
+
+    @property
+    def devcontainers(self) -> LayerDevContainers:
+        return self._layers.devcontainers
+
+    @property
     def description(self) -> str:
         return self._layers.self.description
 
@@ -989,6 +1015,14 @@ class DTProjectV1to3(DTProject):
     @property
     def template_info(self) -> LayerTemplate:
         raise NotImplementedError(f"Field 'template' not implemented in DTProject v{self.type_version}")
+
+    @property
+    def containers(self) -> LayerContainers:
+        return LayerContainers.empty()
+
+    @property
+    def devcontainers(self) -> LayerDevContainers:
+        return LayerDevContainers.empty()
 
     @property
     def description(self) -> str:

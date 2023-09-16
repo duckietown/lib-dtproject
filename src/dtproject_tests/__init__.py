@@ -7,7 +7,8 @@ from typing import Optional, Dict, Union, Any
 from unittest import skipIf
 
 import yaml
-from dtproject.types import LayerBase, Layer, DataClassLayer, DictLayer, LayerOptions, LayerRecipes
+from dtproject.types import LayerBase, Layer, DataClassLayer, DictLayer, LayerOptions, LayerRecipes, \
+    LayerContainers, LayerDevContainers
 
 ASSETS_DIR: str = os.path.abspath(os.path.join(os.path.dirname(__file__), "assets"))
 
@@ -123,6 +124,16 @@ class options_layer(custom_layer):
 class recipes_layer(custom_layer):
     def __init__(self, name: str, layer: Union[Dict[str, Any], LayerRecipes]):
         super(recipes_layer, self).__init__(name, "recipes", layer)
+
+
+class containers_layer(custom_layer):
+    def __init__(self, name: str, layer: Union[Dict[str, Any], LayerContainers]):
+        super(containers_layer, self).__init__(name, "containers", layer)
+
+
+class devcontainers_layer(custom_layer):
+    def __init__(self, name: str, layer: Union[Dict[str, Any], LayerDevContainers]):
+        super(devcontainers_layer, self).__init__(name, "devcontainers", layer)
 
 
 class value(ContextDecorator):

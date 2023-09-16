@@ -80,6 +80,8 @@ class TestLayers(unittest.TestCase):
                             "tag": None,
                         },
                         "recipes": {},
+                        "containers": {},
+                        "devcontainers": {},
                         **layers,
                     },
                 )

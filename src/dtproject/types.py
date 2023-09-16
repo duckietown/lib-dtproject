@@ -15,6 +15,8 @@ class Layer:
 
 
 class DictLayer(Layer, Generic[T], dict):
+    ITEM_CLASS: type = None
+
     def __init__(self, given: bool, **kwargs):
         self._are_given = given
         super().__init__(**kwargs)
@@ -38,7 +40,7 @@ class DictLayer(Layer, Generic[T], dict):
     def from_yaml_file(cls, path: str) -> 'DictLayer':
         with open(path, "rt") as fin:
             d: Dict[str, dict] = yaml.safe_load(fin)
-        return cls(given=True, **{n: Recipe(**r) for n, r in d.items()})
+        return cls(given=True, **{n: cls.ITEM_CLASS(**r) for n, r in d.items()})
 
     @classmethod
     def empty(cls) -> 'DictLayer':
@@ -114,7 +116,7 @@ class Recipe:
 
 
 class LayerRecipes(DictLayer[Recipe]):
-    pass
+    ITEM_CLASS = Recipe
 
 
 class ContainerConfiguration(dict):
@@ -122,4 +124,12 @@ class ContainerConfiguration(dict):
 
 
 class LayerContainers(DictLayer[ContainerConfiguration]):
+    ITEM_CLASS = ContainerConfiguration
+
+
+class DevContainerConfiguration(dict):
     pass
+
+
+class LayerDevContainers(DictLayer[DevContainerConfiguration]):
+    ITEM_CLASS = DevContainerConfiguration

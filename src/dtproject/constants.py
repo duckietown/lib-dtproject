@@ -14,7 +14,6 @@ REQUIRED_METADATA_KEYS = {
     "1": ["TYPE", "VERSION"],
     "2": ["TYPE", "VERSION"],
     "3": ["TYPE", "VERSION"],
-    "4": ["TYPE", "VERSION"],
 }
 
 REQUIRED_METADATA_PER_TYPE_KEYS = {
@@ -83,17 +82,19 @@ TEMPLATE_TO_SRC: Dict[ProjectType,
         "1": lambda _repo: ("code", "/packages/{:s}/".format(_repo)),
         "2": lambda _repo: ("", "/code/{:s}/".format(_repo)),
         "3": lambda _repo: ("", "/code/{:s}/".format(_repo)),
-        "4": lambda _repo: ("", "/code/{:s}/".format(_repo)),
+        "4": lambda _repo: ("", "/code/src/{:s}/".format(_repo)),
     },
     "template-ros": {
         "1": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
         "2": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
         "3": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
+        "4": lambda _repo: ("", "/code/src/{:s}/".format(_repo)),
     },
     "template-core": {
         "1": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
         "2": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
         "3": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
+        "4": lambda _repo: ("", "/code/src/{:s}/".format(_repo)),
     },
     "template-exercise-recipe": {
         "3": lambda _repo: ("packages", "/code/catkin_ws/src/{:s}/packages".format(_repo))
@@ -134,11 +135,13 @@ TEMPLATE_TO_LAUNCHFILE: Dict[ProjectType,
         "1": lambda _repo: ("launch.sh", "/launch/{:s}/launch.sh".format(_repo)),
         "2": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
         "3": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
+        "4": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
     },
     "template-core": {
         "1": lambda _repo: ("launch.sh", "/launch/{:s}/launch.sh".format(_repo)),
         "2": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
         "3": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
+        "4": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
     },
     "template-exercise-recipe": {"3": lambda _repo: ("launchers", "/launch/{:s}".format(_repo))},
     "template-exercise": {"3": lambda _repo: ("launchers", "/launch/{:s}".format(_repo))},
@@ -186,10 +189,14 @@ TEMPLATE_TO_DOCS: Dict[ProjectType,
     "template-library": {
         # version 1 is not supported by this library
         "2": "docs",
+        "3": "docs",
+        "4": "docs",
     },
     "template-book": {
         # version 1 is not supported by this library
         "2": "",
+        "3": "",
+        "4": "",
     }
 }
 

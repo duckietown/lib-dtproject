@@ -30,7 +30,8 @@ from .exceptions import \
 from .constants import *
 from .types import LayerSelf, LayerTemplate, LayerDistro, LayerBase, LayerRecipes, LayerOptions, Recipe, Layer, LayerFormat, LayerContainers, LayerDevContainers
 from .utils.docker import docker_client
-from .utils.misc import run_cmd, git_remote_url_to_https, assert_canonical_arch, DEPRECATED
+from .utils.misc import run_cmd, git_remote_url_to_https, assert_canonical_arch, DEPRECATED, \
+    load_dependencies_file
 from .recipe import get_recipe_project_dir, update_recipe, clone_recipe
 
 
@@ -707,6 +708,18 @@ class DTProject:
             raise NotFound(f"Remote image '{registry}/{owner}/{self.name}:{tag}' not found")
         else:
             response.raise_for_status()
+
+    def apt_dependencies(self, comments: bool = False) -> List[str]:
+        dependencies_fpath: str = os.path.join(self.path, "dependencies-apt.txt")
+        return load_dependencies_file(dependencies_fpath, comments=comments)
+
+    def py3_dependencies(self, comments: bool = False, ) -> List[str]:
+        dependencies_fpath: str = os.path.join(self.path, "dependencies-py3.txt")
+        return load_dependencies_file(dependencies_fpath, comments=comments)
+
+    def py3_dependencies_dt(self, comments: bool = False, ) -> List[str]:
+        dependencies_fpath: str = os.path.join(self.path, "dependencies-py3.dt.txt")
+        return load_dependencies_file(dependencies_fpath, comments=comments)
 
     @staticmethod
     def _get_repo_info(path):

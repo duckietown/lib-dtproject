@@ -1,5 +1,7 @@
+import os
 import re
 import subprocess
+from typing import List
 
 from ..constants import DOCKER_LABEL_DOMAIN, CANONICAL_ARCH
 
@@ -45,3 +47,22 @@ def canonical_arch(arch):
 def DEPRECATED(fcn):
     """This is a decorator that does nothing, it is just used to label functions that are deprecated"""
     return fcn
+
+
+def load_dependencies_file(fpath: str, comments: bool = False) -> List[str]:
+    # no deps file => no deps
+    if not os.path.exists(fpath):
+        return []
+    # load deps
+    with open(fpath, "rt") as fin:
+        deps: List[str] = fin.readlines()
+    # remove new line chars
+    deps = list(map(lambda s: s.strip(), deps))
+    # filter deps from comments
+    if not comments:
+        # remove empty lines
+        deps = list(filter(lambda s: len(s.strip()) > 0, deps))
+        # remove comments
+        deps = list(filter(lambda s: not s.strip().startswith("#"), deps))
+    # ---
+    return deps

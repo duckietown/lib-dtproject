@@ -185,6 +185,26 @@ class DTProject:
         pass
 
     @property
+    @abstractmethod
+    def base_registry(self) -> Optional[str]:
+        pass
+
+    @property
+    @abstractmethod
+    def base_repository(self) -> Optional[str]:
+        pass
+
+    @property
+    @abstractmethod
+    def base_organization(self) -> Optional[str]:
+        pass
+
+    @property
+    @abstractmethod
+    def base_tag(self) -> Optional[str]:
+        pass
+
+    @property
     def build_args(self) -> Dict[str, Any]:
         return {}
 
@@ -854,6 +874,22 @@ class DTProjectV4(DTProject):
         return self._layers.distro.name
 
     @property
+    def base_registry(self) -> Optional[str]:
+        return self._layers.base.registry
+
+    @property
+    def base_repository(self) -> Optional[str]:
+        return self._layers.base.repository
+
+    @property
+    def base_organization(self) -> Optional[str]:
+        return self._layers.base.organization
+
+    @property
+    def base_tag(self) -> Optional[str]:
+        return self._layers.base.tag
+
+    @property
     def build_args(self) -> Dict[str, str]:
         bargs = {
             "DISTRO": self.distro,
@@ -866,6 +902,8 @@ class DTProjectV4(DTProject):
         }
         if self.base_info.tag is not None:
             bargs["BASE_TAG"] = self.base_info.tag
+        if self.base_info.organization is not None:
+            bargs["BASE_ORGANIZATION"] = self.base_info.organization
         # ---
         return bargs
 

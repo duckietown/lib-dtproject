@@ -94,3 +94,12 @@ class TestLayerBase(unittest.TestCase):
             # ---
             self.assertEqual(p.layers.base.repository, base.repository)
             self.assertEqual(p.layers.base.tag, base.tag)
+
+    def test_layer_base_properties_project_v4(self):
+        pd = get_project_path("basic_v4")
+        p = DTProject(pd)
+        # ---
+        self.assertEqual(p.base_repository, p.base_info.repository)
+        self.assertEqual(p.base_registry, p.base_info.registry)
+        self.assertEqual(p.base_organization, p.base_info.organization)
+        self.assertEqual(p.base_tag, p.base_info.tag)

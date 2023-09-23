@@ -98,7 +98,7 @@ class LayerDistro(DataClassLayer):
 @dataclasses.dataclass
 class LayerBase(DataClassLayer):
     repository: str
-    registry: str = DEFAULT_DOCKER_REGISTRY
+    registry: Optional[str] = None
     organization: str = DUCKIETOWN
     tag: Optional[str] = None
 

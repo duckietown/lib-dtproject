@@ -75,7 +75,7 @@ class TestLayers(unittest.TestCase):
                         },
                         "base": {
                             "organization": DUCKIETOWN,
-                            "registry": DEFAULT_DOCKER_REGISTRY,
+                            "registry": None,
                             "repository": "dt-commons",
                             "tag": None,
                         },

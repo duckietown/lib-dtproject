@@ -1,4 +1,4 @@
-from dtproject.constants import DEFAULT_DOCKER_REGISTRY, DUCKIETOWN
+from dtproject.constants import DUCKIETOWN
 from dtproject.types import LayerBase
 
 from . import get_project_path, skip_if_code_mounted, base_layer
@@ -35,7 +35,7 @@ class TestLayerBase(unittest.TestCase):
         p = DTProject(pd)
         # ---
         self.assertEqual(p.base_info.repository, "dt-commons")
-        self.assertEqual(p.base_info.registry, DEFAULT_DOCKER_REGISTRY)
+        self.assertEqual(p.base_info.registry, None)
         self.assertEqual(p.base_info.organization, DUCKIETOWN)
         self.assertEqual(p.base_info.tag, None)
 

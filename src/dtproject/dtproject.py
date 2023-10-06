@@ -631,58 +631,71 @@ class DTProject:
         # ---
         return os.path.join(self.path, template_docs)
 
-    def image_metadata(self, endpoint, arch: str, owner: str, registry: str, version: str):
+    def docker_image(self, endpoint, arch: str, owner: str, registry: str, version: str):
         client = docker_client(endpoint)
         image_name = self.image(arch=arch, owner=owner, version=version, registry=registry)
         try:
-            image: Image = client.image.inspect(image_name)
-            metadata: dict = {
-                # - id: str
-                "id": image.id,
-                # - repo_tags: List[str]
-                "repo_tags": image.repo_tags,
-                # - repo_digests: List[str]
-                "repo_digests": image.repo_digests,
-                # - parent: str
-                "parent": image.parent,
-                # - comment: str
-                "comment": image.comment,
-                # - created: datetime
-                "created": image.created.isoformat(),
-                # - container: str
-                "container": image.container,
-                # - container_config: ContainerConfig
-                "container_config": image.container_config.dict(),
-                # - docker_version: str
-                "docker_version": image.docker_version,
-                # - author: str
-                "author": image.author,
-                # - config: ContainerConfig
-                "config": image.config.dict(),
-                # - architecture: str
-                "architecture": image.architecture,
-                # - os: str
-                "os": image.os,
-                # - os_version: str
-                "os_version": image.os_version,
-                # - size: int
-                "size": image.size,
-                # - virtual_size: int
-                "virtual_size": image.virtual_size,
-                # - graph_driver: ImageGraphDriver
-                "graph_driver": image.graph_driver.dict(),
-                # - root_fs: ImageRootFS
-                "root_fs": image.root_fs.dict(),
-                # - metadata: Dict[str, str]
-                "metadata": image.metadata,
-            }
-            # sanitize posizpath objects
-            metadata["container_config"]["working_dir"] = str(metadata["container_config"]["working_dir"])
-            metadata["config"]["working_dir"] = str(metadata["config"]["working_dir"])
-            # ---
-            return metadata
+            return client.image.inspect(image_name)
         except NoSuchImage:
+            return None
+
+    def image_metadata(self, endpoint, arch: str, owner: str, registry: str, version: str):
+        image_name = self.image(arch=arch, owner=owner, version=version, registry=registry)
+        image: Optional[Image] = self.docker_image(
+            endpoint,
+            arch=arch,
+            owner=owner,
+            registry=registry,
+            version=version
+        )
+        if image is None:
             raise Exception(f"Cannot get image metadata for {image_name!r}: \n {traceback.format_exc()}")
+        # collect metadata
+        metadata: dict = {
+            # - id: str
+            "id": image.id,
+            # - repo_tags: List[str]
+            "repo_tags": image.repo_tags,
+            # - repo_digests: List[str]
+            "repo_digests": image.repo_digests,
+            # - parent: str
+            "parent": image.parent,
+            # - comment: str
+            "comment": image.comment,
+            # - created: datetime
+            "created": image.created.isoformat(),
+            # - container: str
+            "container": image.container,
+            # - container_config: ContainerConfig
+            "container_config": image.container_config.dict(),
+            # - docker_version: str
+            "docker_version": image.docker_version,
+            # - author: str
+            "author": image.author,
+            # - config: ContainerConfig
+            "config": image.config.dict(),
+            # - architecture: str
+            "architecture": image.architecture,
+            # - os: str
+            "os": image.os,
+            # - os_version: str
+            "os_version": image.os_version,
+            # - size: int
+            "size": image.size,
+            # - virtual_size: int
+            "virtual_size": image.virtual_size,
+            # - graph_driver: ImageGraphDriver
+            "graph_driver": image.graph_driver.dict(),
+            # - root_fs: ImageRootFS
+            "root_fs": image.root_fs.dict(),
+            # - metadata: Dict[str, str]
+            "metadata": image.metadata,
+        }
+        # sanitize path objects
+        metadata["container_config"]["working_dir"] = str(metadata["container_config"]["working_dir"])
+        metadata["config"]["working_dir"] = str(metadata["config"]["working_dir"])
+        # ---
+        return metadata
 
     def image_labels(self, endpoint, *, arch: str, owner: str, registry: str, version: str):
         metadata: dict = self.image_metadata(

@@ -2,7 +2,6 @@ import copy
 import dataclasses
 import glob
 import os
-import re
 import traceback
 from abc import abstractmethod
 from pathlib import Path
@@ -28,10 +27,11 @@ from .exceptions import \
     InconsistentDTProject
 
 from .constants import *
-from .types import LayerSelf, LayerTemplate, LayerDistro, LayerBase, LayerRecipes, LayerOptions, Recipe, Layer, LayerFormat, LayerContainers, LayerDevContainers
+from .types import LayerSelf, LayerTemplate, LayerDistro, LayerBase, LayerRecipes, LayerOptions, Recipe, \
+    Layer, LayerFormat, LayerContainers, LayerDevContainers
 from .utils.docker import docker_client
 from .utils.misc import run_cmd, git_remote_url_to_https, assert_canonical_arch, DEPRECATED, \
-    load_dependencies_file
+    load_dependencies_file, safe_name
 from .recipe import get_recipe_project_dir, update_recipe, clone_recipe
 
 
@@ -218,8 +218,16 @@ class DTProject:
         return self._repository.head_version if self._repository else "latest"
 
     @property
+    def safe_head_version(self) -> str:
+        return safe_name(self.head_version)
+
+    @property
     def closest_version(self):
         return self._repository.closest_version if self._repository else "latest"
+
+    @property
+    def safe_closest_version(self) -> str:
+        return safe_name(self.closest_version)
 
     @property
     def version_name(self):
@@ -228,7 +236,7 @@ class DTProject:
 
     @property
     def safe_version_name(self) -> str:
-        return re.sub(r"[^\w\-.]", "-", self.version_name)
+        return safe_name(self.version_name)
 
     @property
     def url(self):
@@ -386,21 +394,20 @@ class DTProject:
     def image(
             self,
             *,
-            arch: str,
+            arch: Optional[str],
             registry: str,
             owner: str,
-            version: Optional[str] = None,
+            version: str,
             loop: bool = False,
             docs: bool = False,
             extra: Optional[str] = None,
     ) -> str:
         assert_canonical_arch(arch)
-        loop = "-LOOP" if loop else ""
-        docs = "-docs" if docs else ""
-        extra = f"-{extra}" if extra else ""
-        if version is None:
-            version = self.safe_version_name
-        return f"{registry}/{owner}/{self.name}:{version}{extra}{loop}{docs}-{arch}"
+        loop: str = "-LOOP" if loop else ""
+        docs: str = "-docs" if docs else ""
+        extra: str = f"-{extra}" if extra else ""
+        arch: str = f"-{arch}" if arch else ""
+        return f"{registry}/{owner}/{self.name}:{version}{extra}{loop}{docs}{arch}"
 
     def image_vscode(
             self,
@@ -408,7 +415,7 @@ class DTProject:
             arch: str,
             registry: str,
             owner: str,
-            version: Optional[str] = None,
+            version: str,
             docs: bool = False,
     ) -> str:
         return self.image(
@@ -421,7 +428,7 @@ class DTProject:
             arch: str,
             registry: str,
             owner: str,
-            version: Optional[str] = None,
+            version: str,
             docs: bool = False,
     ) -> str:
         return self.image(arch=arch, registry=registry, owner=owner, version=version, docs=docs, extra="vnc")
@@ -436,22 +443,17 @@ class DTProject:
     ) -> str:
         if not self.is_release():
             raise ValueError("The project repository is not in a release state")
-        assert_canonical_arch(arch)
-        docs = "-docs" if docs else ""
-        version = re.sub(r"[^\w\-.]", "-", self.head_version)
-        return f"{registry}/{owner}/{self.name}:{version}{docs}-{arch}"
+        version = self.safe_head_version
+        return self.image(arch=arch, registry=registry, owner=owner, version=version, docs=docs)
 
     def manifest(
             self,
             *,
             registry: str,
             owner: str,
-            version: Optional[str] = None,
+            version: str,
     ) -> str:
-        if version is None:
-            version = re.sub(r"[^\w\-.]", "-", self.version_name)
-
-        return f"{registry}/{owner}/{self.name}:{version}"
+        return self.image(arch=None, registry=registry, owner=owner, version=version)
 
     def ci_metadata(self, endpoint, *, arch: str, registry: str, owner: str, version: str):
         image_tag = self.image(arch=arch, owner=owner, version=version, registry=registry)

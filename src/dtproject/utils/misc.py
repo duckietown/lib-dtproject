@@ -66,3 +66,7 @@ def load_dependencies_file(fpath: str, comments: bool = False) -> List[str]:
         deps = list(filter(lambda s: not s.strip().startswith("#"), deps))
     # ---
     return deps
+
+
+def safe_name(s: str) -> str:
+    return re.sub(r"[^\w\-.]", "-", s)

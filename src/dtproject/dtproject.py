@@ -402,7 +402,8 @@ class DTProject:
             docs: bool = False,
             extra: Optional[str] = None,
     ) -> str:
-        assert_canonical_arch(arch)
+        if arch is not None:
+            assert_canonical_arch(arch)
         loop: str = "-LOOP" if loop else ""
         docs: str = "-docs" if docs else ""
         extra: str = f"-{extra}" if extra else ""

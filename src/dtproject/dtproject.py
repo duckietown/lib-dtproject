@@ -741,6 +741,18 @@ class DTProject:
     def _get_repo_info(path):
         # get current SHA
         try:
+            # TODO: this command can return the following error (which is for now just printed to screen)
+            #      .
+            #      .
+            #         fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree.
+            #         Use '--' to separate paths from revisions, like this:
+            #         'git <command> [<revision>...] -- [<file>...]'
+            #      .
+            #      .
+            #   This happens when the repository has no commits yet, so no HEAD.
+            #   We need to catch it and gracefully handle the case, warn the user that there are no commits
+            #   and revert to non-repository behavior.
+            #
             sha = run_cmd(["git", "-C", f'"{path}"', "rev-parse", "HEAD"])[0]
         except CalledProcessError as e:
             if e.returncode == 128:

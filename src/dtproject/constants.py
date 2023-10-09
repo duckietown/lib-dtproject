@@ -96,6 +96,12 @@ TEMPLATE_TO_SRC: Dict[ProjectType,
         "3": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
         "4": lambda _repo: ("", "/code/src/{:s}/".format(_repo)),
     },
+    "template-compose": {
+        "1": lambda _repo: ("code", "/packages/{:s}/".format(_repo)),
+        "2": lambda _repo: ("", "/code/{:s}/".format(_repo)),
+        "3": lambda _repo: ("", "/code/{:s}/".format(_repo)),
+        "4": lambda _repo: ("", "/code/src/{:s}/".format(_repo)),
+    },
     "template-exercise-recipe": {
         "3": lambda _repo: ("packages", "/code/catkin_ws/src/{:s}/packages".format(_repo))
     },
@@ -143,6 +149,12 @@ TEMPLATE_TO_LAUNCHFILE: Dict[ProjectType,
         "3": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
         "4": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
     },
+    "template-compose": {
+        "1": lambda _repo: ("launch.sh", "/launch/{:s}/launch.sh".format(_repo)),
+        "2": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
+        "3": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
+        "4": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
+    },
     "template-exercise-recipe": {"3": lambda _repo: ("launchers", "/launch/{:s}".format(_repo))},
     "template-exercise": {"3": lambda _repo: ("launchers", "/launch/{:s}".format(_repo))},
 }
@@ -183,6 +195,10 @@ TEMPLATE_TO_DOCS: Dict[ProjectType,
         "4": "docs",
     },
     "template-ros": {
+        # versions 1-3 are not supported by this library
+        "4": "docs",
+    },
+    "template-compose": {
         # versions 1-3 are not supported by this library
         "4": "docs",
     },

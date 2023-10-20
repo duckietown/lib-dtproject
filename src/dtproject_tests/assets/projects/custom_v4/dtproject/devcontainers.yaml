@@ -1,0 +1,7 @@
+name: Duckietown Dev Container
+image: ${localEnv:DOCKER_REGISTRY:docker.io}/duckietown/${localWorkspaceFolderBasename}:ente-amd64
+workspaceFolder: /code/catkin_ws/src/${localWorkspaceFolderBasename}
+mounts:
+  - ""
+runArgs:
+  - ""

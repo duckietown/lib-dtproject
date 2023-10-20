@@ -1,6 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
     "$comment": "Schema for /dtproject/devcontainers.yaml file",
+    "title": "Duckietown devcontainers",
     "type": "object",
     "description": "Dictionary of named devcontainer-compatible configurations",
     "patternProperties": {
@@ -8,5 +9,90 @@
             "type": "object",
             "description": "DevContainer-compatible configuration. This is whatever you would put inside a '.devcontainer.json' file"
         }
-    }
+    },
+    "properties": {
+        "name": {
+            "type": "string",
+            "default": "Duckietown Dev Container",
+            "description": "Name of the Dev Container"
+        },
+        "image": {
+            "type": "string",
+            "default": "${localEnv:DOCKER_REGISTRY:docker.io}/duckietown/${localWorkspaceFolderBasename}:ente-amd64",
+            "description": "Docker image tag"
+        },
+        "workspaceFolder": {
+            "type": "string",
+            "default": "/code/catkin_ws/src/${localWorkspaceFolderBasename}",
+            "description": "Workspace folder path"
+        },
+        "mounts": {
+            "type": "array",
+            "default": [
+                "source=/var/run/avahi-daemon/socket,target=/var/run/avahi-daemon/socket,type=bind",
+                "source=${localWorkspaceFolder},target=/code/src/${localWorkspaceFolderBasename},type=bind",
+                "source=${localWorkspaceFolder}/launchers,target=/launch/${localWorkspaceFolderBasename},type=bind"
+            ],
+            "items": {
+                "type": "string"
+            },
+            "description": "Array of mount configurations"
+        },
+        "runArgs": {
+            "type": "array",
+            "default": [
+                "--net=host",
+                "--rm",
+                "--name",
+                "dts-code-${localWorkspaceFolderBasename}"
+            ],
+            "items": {
+                "type": "string"
+            },
+            "description": "Array of run arguments"
+        },
+        "customizations": {
+            "type": "object",
+            "properties": {
+                "vscode": {
+                    "type": "object",
+                    "properties": {
+                        "extensions": {
+                            "type": "array",
+                            "default": [
+                                "ms-iot.vscode-ros",
+                                "ms-python.python",
+                                "ms-vscode.cpptools"
+                            ],
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "Array of Visual Studio Code extensions"
+                        }
+                    },
+                    "required": [
+                        "extensions"
+                    ]
+                }
+            },
+            "default": {
+                "vscode": {
+                    "extensions": [
+                        "ms-iot.vscode-ros",
+                        "ms-python.python",
+                        "ms-vscode.cpptools"
+                    ]
+                }
+            },
+            ""
+            "description": "Customizations for Visual Studio Code"
+        }
+    },    
+    "required": [
+        "name",
+        "image",
+        "workspaceFolder",
+        "mounts",
+        "runArgs"
+    ]
 }

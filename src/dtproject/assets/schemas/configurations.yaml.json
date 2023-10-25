@@ -1,0 +1,54 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Duckietown Dev Container Configurations",
+    "items": {
+        "type": "object",
+        "properties": {
+            "configuration": { "type": "string", "default": "default" },
+            "devcontainer": {
+                "type": "object",
+                "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
+                "description": "The devcontainer.json file defines how to build and configure a container for use with Visual Studio Code's Remote - Containers extension.",
+                "properties": {
+                    "name": { "type": "string", "default": "Duckietown Dev Container" },
+                    "image": { "type": "string", "default": "duckietown/${localWorkspaceFolderBasename}:ente-amd64" },
+                    "workspaceFolder": { "type": "string", "default": "/code/src/${localWorkspaceFolderBasename}" },
+                    "mounts": {
+                        "type": "array",
+                        "default": [
+                            "source=/var/run/avahi-daemon/socket,target=/var/run/avahi-daemon/socket,type=bind",
+                            "source=${localWorkspaceFolder},target=/code/catkin_ws/src/${localWorkspaceFolderBasename},type=bind",
+                            "source=${localWorkspaceFolder}/launchers,target=/launch/${localWorkspaceFolderBasename},type=bind"
+                        ]
+                    },
+                    "customizations": {
+                        "type": "object",
+                        "properties": {
+                            "vscode": {
+                                "type": "object",
+                                "properties": {
+                                    "extensions": {
+                                        "type": "array",
+                                        "default": ["ms-iot.vscode-ros", "ms-python.python", "ms-vscode.cpptools"]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "runArgs": {
+                        "type": "array",
+                        "default": ["-it", "--net=host", "--rm"]
+                    }
+                }
+            },
+            "extends": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "A list of configuration names to extend from."
+            },
+            "plain": { "type": "boolean" }
+        },
+        "required": ["configuration", "devcontainer"],
+        "additionalProperties": false
+    }
+}

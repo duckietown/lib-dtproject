@@ -1,0 +1,19 @@
+- configuration: default
+  devcontainer:
+    name: Duckietown Dev Container
+    image: duckietown/:ente-amd64
+    workspaceFolder: /code/src/
+    customizations:
+      vscode:
+        extensions: 
+          - ms-iot.vscode-ros
+          - ms-python.python
+          - ms-vscode.cpptools
+    mounts: 
+      - source=/var/run/avahi-daemon/socket,target=/var/run/avahi-daemon/socket,type=bind
+      - source=,target=/code/catkin_ws/src/,type=bind
+      - source=/launchers,target=/launch/,type=bind
+    runArgs: 
+      - -it
+      - --net=host
+      - --rm

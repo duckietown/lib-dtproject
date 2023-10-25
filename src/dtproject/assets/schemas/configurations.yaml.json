@@ -9,8 +9,8 @@
                 "configuration": { "type": "string", "default": "default" },
                 "devcontainer": {
                     "type": "object",
-                    "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
-                    "description": "The devcontainer.json file defines how to build and configure a container for use with Visual Studio Code's Remote - Containers extension.",
+                    "$ref": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
+                    "description": "The devcontainer.json file defines how to build and configure a container for development use",
                     "properties": {
                         "name": { "type": "string", "default": "Duckietown Dev Container" },
                         "image": { "type": "string", "default": "duckietown/${localWorkspaceFolderBasename}:ente-amd64" },
@@ -27,6 +27,7 @@
                             "type": "object",
                             "properties": {
                                 "vscode": {
+                                    "$ref": "https://raw.githubusercontent.com/microsoft/vscode/main/extensions/configuration-editing/schemas/devContainer.vscode.schema.json#/properties/customizations/properties/vscode",
                                     "type": "object",
                                     "properties": {
                                         "extensions": {

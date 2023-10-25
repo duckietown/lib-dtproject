@@ -13,14 +13,14 @@
                     "description": "The devcontainer.json file defines how to build and configure a container for development use",
                     "properties": {
                         "name": { "type": "string", "default": "Duckietown Dev Container" },
-                        "image": { "type": "string", "default": "duckietown/${localWorkspaceFolderBasename}:ente-amd64" },
-                        "workspaceFolder": { "type": "string", "default": "/code/src/${localWorkspaceFolderBasename}" },
+                        "image": { "type": "string", "default": "duckietown/\\${localWorkspaceFolderBasename\\}:ente-amd64" },
+                        "workspaceFolder": { "type": "string", "default": "/code/src/\\${localWorkspaceFolderBasename\\}" },
                         "mounts": {
                             "type": "array",
                             "default": [
                                 "source=/var/run/avahi-daemon/socket,target=/var/run/avahi-daemon/socket,type=bind",
-                                "source=${localWorkspaceFolder},target=/code/catkin_ws/src/${localWorkspaceFolderBasename},type=bind",
-                                "source=${localWorkspaceFolder}/launchers,target=/launch/${localWorkspaceFolderBasename},type=bind"
+                                "source=\\${localWorkspaceFolder\\},target=/code/catkin_ws/src/${localWorkspaceFolderBasename},type=bind",
+                                "source=\\${localWorkspaceFolder\\}/launchers,target=/launch/${localWorkspaceFolderBasename},type=bind"
                             ]
                         },
                         "customizations": {

@@ -27,7 +27,7 @@ from .exceptions import \
     InconsistentDTProject
 
 from .constants import *
-from .types import LayerSelf, LayerTemplate, LayerDistro, LayerBase, LayerRecipes, LayerOptions, Recipe, \
+from .types import LayerConfigurations, LayerSelf, LayerTemplate, LayerDistro, LayerBase, LayerRecipes, LayerOptions, Recipe, \
     Layer, LayerFormat, LayerContainers, LayerDevContainers
 from .utils.docker import docker_client
 from .utils.misc import run_cmd, git_remote_url_to_https, assert_canonical_arch, DEPRECATED, \
@@ -62,6 +62,7 @@ class DTProject:
         "options": LayerOptions,
         "containers": LayerContainers,
         "devcontainers": LayerDevContainers,
+        "configurations" : LayerConfigurations
     }
     KNOWN_LAYERS = {**REQUIRED_LAYERS, **OPTIONAL_LAYERS}
 

@@ -1,5 +1,6 @@
 import dataclasses
-from typing import Optional, TypeVar, Generic
+from os import name
+from typing import List, Optional, TypeVar, Generic
 
 import yaml
 from dataclass_wizard import YAMLWizard
@@ -126,10 +127,26 @@ class ContainerConfiguration(dict):
 class LayerContainers(DictLayer[ContainerConfiguration]):
     ITEM_CLASS = ContainerConfiguration
 
-
+@dataclasses.dataclass
 class DevContainerConfiguration(dict):
-    pass
+    name: str
+    image: str
+    workspaceFolder: str
+    mounts: List[str]
+    customizations: Dict[str, List[str]]
+    runArgs: List[str]
 
 
 class LayerDevContainers(DictLayer[DevContainerConfiguration]):
     ITEM_CLASS = DevContainerConfiguration
+
+@dataclasses.dataclass
+class Configuration:
+    configuration: str
+    devcontainer: DevContainerConfiguration
+    extends: List[DevContainerConfiguration]
+    plain: bool
+
+@dataclasses.dataclass
+class LayerConfigurations(DictLayer[Configuration]):
+    ITEM_CLASS = Configuration

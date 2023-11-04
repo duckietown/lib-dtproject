@@ -2,11 +2,22 @@
     "$schema": "http://json-schema.org/draft-07/schema",
     "$comment": "Schema for /dtproject/devcontainers.yaml file",
     "type": "object",
-    "description": "Dictionary of named devcontainer-compatible configurations",
-    "patternProperties": {
-        ".*": {
-            "type": "object",
-            "description": "DevContainer-compatible configuration. This is whatever you would put inside a '.devcontainer.json' file"
+    "description": "Devcontainer-compatible configurations",
+    "properties": {
+        "dockerComposeFile": {
+            "type": "string",
+            "description": "The path to the docker-compose file to use for the devcontainer",
+            "default": "docker-compose.yml"
+        },
+        "service": {
+            "type": "string",
+            "description": "The name of the service to use for the devcontainer",
+            "default": "devcontainer"
+        },
+        "workspaceFolder": {
+            "type": "string",
+            "description": "The path to the workspace folder to use for the devcontainer",
+            "default": "/code/src/${localWorkspaceFolderBasename}"
         }
     }
 }

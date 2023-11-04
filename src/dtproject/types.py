@@ -126,9 +126,11 @@ class ContainerConfiguration(dict):
 class LayerContainers(DictLayer[ContainerConfiguration]):
     ITEM_CLASS = ContainerConfiguration
 
-
+@dataclasses.dataclass
 class DevContainerConfiguration(dict):
-    pass
+    docker_compose_file: str
+    service: str
+    workspace_folder: str
 
 
 class LayerDevContainers(DictLayer[DevContainerConfiguration]):

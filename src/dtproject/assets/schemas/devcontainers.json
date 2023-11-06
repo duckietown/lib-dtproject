@@ -59,12 +59,8 @@
                     },
                     "description": "Customizations for Visual Studio Code"
                 }
-            }    
+            },
+            "required": ["dockerComposeFile", "service", "workspaceFolder"]
         }
-    },
-    "required": [
-        "dockerComposeFile",
-        "service",
-        "workspaceFolder"
-    ]
+    }
 }

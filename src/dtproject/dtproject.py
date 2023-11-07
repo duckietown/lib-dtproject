@@ -62,7 +62,6 @@ class DTProject:
         "options": LayerOptions,
         "containers": LayerContainers,
         "devcontainers": LayerDevContainers,
-        "configurations" : LayerConfigurations
     }
     KNOWN_LAYERS = {**REQUIRED_LAYERS, **OPTIONAL_LAYERS}
 

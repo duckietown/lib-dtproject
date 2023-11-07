@@ -120,8 +120,10 @@ class LayerRecipes(DictLayer[Recipe]):
     ITEM_CLASS = Recipe
 
 
+@dataclasses.dataclass
 class ContainerConfiguration(dict):
-    pass
+    extends: Optional[str]
+    plain: Optional[bool]
 
 
 class LayerContainers(DictLayer[ContainerConfiguration]):
@@ -139,14 +141,3 @@ class DevContainerConfiguration(dict):
 
 class LayerDevContainers(DictLayer[DevContainerConfiguration]):
     ITEM_CLASS = DevContainerConfiguration
-
-@dataclasses.dataclass
-class Configuration:
-    configuration: str
-    devcontainer: DevContainerConfiguration
-    extends: List[DevContainerConfiguration]
-    plain: bool
-
-@dataclasses.dataclass
-class LayerConfigurations(DictLayer[Configuration]):
-    ITEM_CLASS = Configuration

@@ -1,5 +1,4 @@
 import dataclasses
-from dataclasses import field
 from typing import List, Optional, TypeVar, Generic, Union, Dict
 
 import yaml
@@ -128,42 +127,22 @@ class LayerContainers(DictLayer[ContainerConfiguration]):
     ITEM_CLASS = ContainerConfiguration
 
 @dataclasses.dataclass
-class PortAttributes:
-    label: str = ""
-    protocol: str = ""
-    onAutoForward: str = ""
-    requireLocalPort: bool = False
-    elevateIfNeeded: bool = False
-
 class DevContainerConfiguration(dict):
-    configuration: str
-    name: Optional[str] = None
-    forwardPorts: Optional[List[Union[int, str]]] = None
-    portsAttributes: Optional[Dict[str, PortAttributes]] = None
-    otherPortsAttributes: Optional[PortAttributes] = None
-    containerEnv: Optional[Dict[str, str]] = None
+    configuration: Optional[str] = None
     remoteEnv: Optional[Dict[str, str]] = None
     remoteUser: Optional[str] = None
     containerUser: Optional[str] = None
     updateRemoteUserUID: Optional[bool] = None
-    userEnvProbe: Optional[str] = None
-    overrideCommand: Optional[bool] = None
     shutdownAction: Optional[str] = None
     init: Optional[bool] = None
-    capAdd: Optional[List[str]] = None
-    securityOpt: Optional[List[str]] = None
-    features: Optional[Dict[str, Dict]] = None
-    overrideFeatureInstallOrder: Optional[List[str]] = None
+    
     customizations: Optional[Dict[str, Dict]] = None
 
     # Docker Compose properties
-    dockerComposeFile: str
-    service: str
-    runServices: Optional[List[str]] = None
-    workspaceFolder: str
+    dockerComposeFile: Optional[str] = None
+    service: Optional[str] = None
+    workspaceFolder: Optional[str] = None
 
-    portsAttributes: Optional[Dict[str, PortAttributes]] = None
-    otherPortsAttributes: Optional[PortAttributes] = None
 
 class LayerDevContainers(DictLayer[DevContainerConfiguration]):
     ITEM_CLASS = DevContainerConfiguration

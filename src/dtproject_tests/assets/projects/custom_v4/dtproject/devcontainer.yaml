@@ -1,4 +1,1 @@
-default:  
-  dockerComposeFile: docker-compose.yml
-  service: devcontainer
-  workspaceFolder: /code/catkin_ws/src/${localWorkspaceFolderBasename}
+default:

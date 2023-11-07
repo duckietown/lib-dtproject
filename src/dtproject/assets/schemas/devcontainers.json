@@ -17,11 +17,11 @@
                 "service": {
                     "type": "string",
                     "description": "The name of the service to use for the devcontainer",
-                    "default": "devcontainer"
+                    "default": "null"
                 },
                 "workspaceFolder": {
                     "type": "string",
-                    "default": "/code/catkin_ws/src/${localWorkspaceFolderBasename}",
+                    "default": "null",
                     "description": "Workspace folder path"
                 },
                 "customizations": {
@@ -46,6 +46,10 @@
                             "required": [
                                 "extensions"
                             ]
+                        },
+                        "docker_compose_additions": {
+                            "description": "Docker compose-compatible additions to the container",
+                            "type": "object"
                         }
                     },
                     "default": {
@@ -59,8 +63,7 @@
                     },
                     "description": "Customizations for Visual Studio Code"
                 }
-            },
-            "required": ["dockerComposeFile", "service", "workspaceFolder"]
+            }
         }
     }
 }

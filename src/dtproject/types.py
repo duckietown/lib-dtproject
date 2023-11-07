@@ -129,14 +129,8 @@ class ContainerConfiguration(dict):
 class LayerContainers(DictLayer[ContainerConfiguration]):
     ITEM_CLASS = ContainerConfiguration
 
-@dataclasses.dataclass
 class DevContainerConfiguration(dict):
-    name: str
-    image: str
-    workspaceFolder: str
-    mounts: List[str]
-    customizations: Dict[str, List[str]]
-    runArgs: List[str]
+    pass
 
 
 class LayerDevContainers(DictLayer[DevContainerConfiguration]):

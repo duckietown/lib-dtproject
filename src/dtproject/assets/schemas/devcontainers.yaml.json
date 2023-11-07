@@ -6,8 +6,7 @@
     "patternProperties": {
         ".*": {
             "type": "object",
-            "description": "DevContainer-compatible configuration. This is whatever you would put inside a '.devcontainer.json' file",
-            "$ref": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json"
+            "description": "DevContainer-compatible configuration. This is whatever you would put inside a '.devcontainer.json' file"
         }
     }
 }

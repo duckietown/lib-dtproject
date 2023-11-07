@@ -6,8 +6,6 @@
       ".*": {
         "type": "object",
         "properties": {
-          "configuration": { "type": "string", "default": "default" },
-          "devcontainer": { "type": "string", "default": "devcontainers" },
           "extends": {
             "type": "array",
             "items": { "type": "string" },
@@ -15,8 +13,7 @@
             "uniqueItems": true
           },
           "plain": { "type": "boolean"}
-        },
-        "required": ["configuration", "devcontainer"]
+        }
       }
     }
   }

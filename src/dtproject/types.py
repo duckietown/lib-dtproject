@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Optional, TypeVar, Generic
+from typing import List, Optional, TypeVar, Generic, Union, Dict
 
 import yaml
 from dataclass_wizard import YAMLWizard
@@ -126,9 +126,34 @@ class ContainerConfiguration(dict):
 class LayerContainers(DictLayer[ContainerConfiguration]):
     ITEM_CLASS = ContainerConfiguration
 
-
+@dataclasses.dataclass
 class DevContainerConfiguration(dict):
-    pass
+    """
+    Represents a configuration for a development container.
+
+    See https://containers.dev/implementors/json_reference/ for details about each property.
+
+    Attributes:
+        container (str): The name of the container configuration stored in the `containers.yaml` layer to use.
+
+    Note:
+        This data class inherits from dict, allowing instances to be treated as dictionaries.
+
+    """
+    container: str
+    remoteEnv: Optional[Dict[str, str]] = None
+    remoteUser: Optional[str] = None
+    containerUser: Optional[str] = None
+    updateRemoteUserUID: Optional[bool] = None
+    shutdownAction: Optional[str] = None
+    init: Optional[bool] = None
+    
+    customizations: Optional[Dict[str, Dict]] = None
+
+    # Docker Compose properties
+    dockerComposeFile: Optional[str] = None
+    service: Optional[str] = None
+    workspaceFolder: Optional[str] = None
 
 
 class LayerDevContainers(DictLayer[DevContainerConfiguration]):

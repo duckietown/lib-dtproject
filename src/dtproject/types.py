@@ -119,8 +119,10 @@ class LayerRecipes(DictLayer[Recipe]):
     ITEM_CLASS = Recipe
 
 
+@dataclasses.dataclass
 class ContainerConfiguration(dict):
-    pass
+    extends: Optional[str] = None
+    plain: Optional[bool] = None
 
 
 class LayerContainers(DictLayer[ContainerConfiguration]):

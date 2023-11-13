@@ -1,0 +1,21 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$comment": "Schema for /dtproject/containers.yaml file",
+    "type": "object",
+    "description": "Dictionary of named container configurations. Use these for test and/or deployments",
+    "patternProperties": {
+        ".*": {
+            "type": "object",
+            "description": "Docker-compose-compatible container configuration object",
+            "properties": {
+                "extends": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "A list of configurations to extend from.",
+                  "uniqueItems": true
+                },
+                "plain": { "type": "boolean"}
+              }
+        }
+    }
+}

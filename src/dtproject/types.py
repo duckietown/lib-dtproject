@@ -128,7 +128,7 @@ class LayerContainers(DictLayer[ContainerConfiguration]):
 
 @dataclasses.dataclass
 class DevContainerConfiguration(dict):
-    configuration: Optional[str] = None
+    container: str
     remoteEnv: Optional[Dict[str, str]] = None
     remoteUser: Optional[str] = None
     containerUser: Optional[str] = None

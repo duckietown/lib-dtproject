@@ -9,6 +9,12 @@
             "type": "object",
             "description": "DevContainer-compatible configuration. This is whatever you would put inside a '.devcontainer.json' file",
             "properties": {
+                
+                "container": {
+                    "type": "string",  
+                    "default": "default",  
+                    "details": "Name of the container configuration to load from the containers.yaml layer"  
+                },
                 "dockerComposeFile": {
                     "type": "string",
                     "description": "The path to the docker-compose file to use for the devcontainer",
@@ -17,11 +23,11 @@
                 "service": {
                     "type": "string",
                     "description": "The name of the service to use for the devcontainer",
-                    "default": "null"
+                    "default": null
                 },
                 "workspaceFolder": {
                     "type": "string",
-                    "default": "null",
+                    "default": null,
                     "description": "Workspace folder path"
                 },
                 "customizations": {
@@ -29,6 +35,7 @@
                     "properties": {
                         "vscode": {
                             "type": "object",
+                            "description": "Customizations for Visual Studio Code",
                             "properties": {
                                 "extensions": {
                                     "type": "array",
@@ -47,7 +54,7 @@
                                 "extensions"
                             ]
                         },
-                        "docker_compose_additions": {
+                        "container": {
                             "description": "Docker compose-compatible additions to the container",
                             "type": "object"
                         }
@@ -60,8 +67,7 @@
                                 "ms-vscode.cpptools"
                             ]
                         }
-                    },
-                    "description": "Customizations for Visual Studio Code"
+                    }
                 }
             }
         }

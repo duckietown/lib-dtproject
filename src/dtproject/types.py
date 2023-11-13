@@ -128,6 +128,18 @@ class LayerContainers(DictLayer[ContainerConfiguration]):
 
 @dataclasses.dataclass
 class DevContainerConfiguration(dict):
+    """
+    Represents a configuration for a development container.
+
+    See https://containers.dev/implementors/json_reference/ for details about each property.
+
+    Attributes:
+        container (str): The name of the container configuration stored in the `containers.yaml` layer to use.
+
+    Note:
+        This data class inherits from dict, allowing instances to be treated as dictionaries.
+
+    """
     container: str
     remoteEnv: Optional[Dict[str, str]] = None
     remoteUser: Optional[str] = None

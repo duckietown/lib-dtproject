@@ -121,8 +121,8 @@ class LayerRecipes(DictLayer[Recipe]):
 
 @dataclasses.dataclass
 class ContainerConfiguration(dict):
-    extends: Optional[str] = None
-    plain: Optional[bool] = None
+    __extends__: Optional[str] = None
+    __plain__: Optional[bool] = None
 
 
 class LayerContainers(DictLayer[ContainerConfiguration]):

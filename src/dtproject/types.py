@@ -1,5 +1,5 @@
 import dataclasses
-from typing import List, Optional, TypeVar, Generic, Union, Dict
+from typing import DefaultDict, List, Optional, TypeVar, Generic, Dict
 
 import yaml
 from dataclass_wizard import YAMLWizard
@@ -157,6 +157,15 @@ class DevContainerConfiguration(dict):
     service: Optional[str] = None
     workspaceFolder: Optional[str] = None
 
+@dataclasses.dataclass
+class Hook():
+    command: str = ""
+    required: Optional[bool] = False
+
+@dataclasses.dataclass
+class LayerHooks(DataClassLayer):
+    version: int
+    hooks: DefaultDict[str, List[Hook]]
 
 class LayerDevContainers(DictLayer[DevContainerConfiguration]):
     ITEM_CLASS = DevContainerConfiguration

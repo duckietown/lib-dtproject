@@ -140,6 +140,11 @@ class DTProject:
     @abstractmethod
     def devcontainers(self) -> LayerDevContainers:
         pass
+    
+    @property
+    @abstractmethod
+    def hooks(self) -> LayerHooks:
+        pass
 
     @property
     @abstractmethod

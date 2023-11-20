@@ -1,12 +1,11 @@
-from collections import defaultdict
 import dataclasses
-from typing import DefaultDict, List, Optional, TypeVar, Generic, Dict
+from typing import List, Optional, TypeVar, Generic
 
 import yaml
 from dataclass_wizard import YAMLWizard
 
 from .constants import *
-
+from .utils.misc import ddict
 
 T = TypeVar("T")
 
@@ -158,14 +157,17 @@ class DevContainerConfiguration(dict):
     service: Optional[str] = None
     workspaceFolder: Optional[str] = None
 
+
 @dataclasses.dataclass
-class Hook():
+class Hook:
     command: str
     required: Optional[bool] = False
 
+
 @dataclasses.dataclass
 class LayerHooks(DataClassLayer):
-    hooks: DefaultDict[str, List[Hook]] = dataclasses.field(default_factory=lambda: defaultdict(list))
+    hooks: Dict[str, List[Hook]] = dataclasses.field(default_factory=lambda: ddict(list))
+
 
 class LayerDevContainers(DictLayer[DevContainerConfiguration]):
     ITEM_CLASS = DevContainerConfiguration

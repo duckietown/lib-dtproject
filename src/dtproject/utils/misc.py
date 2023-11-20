@@ -6,6 +6,26 @@ from typing import List
 from ..constants import DOCKER_LABEL_DOMAIN, CANONICAL_ARCH
 
 
+class ddict(dict):
+    """
+    Default dictionary. Unlike collections.defaultdict, this class inherits from `dict` so it works
+    well with dataclasses.as_dict().
+    """
+
+    def __init__(self, default_factory, *args, **kwargs):
+        super(ddict, self).__init__(*args, **kwargs)
+        self._T = default_factory
+
+    def __getitem__(self, item):
+        try:
+            return super(ddict, self).__getitem__(item)
+        except KeyError:
+            return self._T()
+
+    def get(self, __key, _=None) -> list:
+        return self.__getitem__(__key)
+
+
 def run_cmd(cmd):
     cmd = " ".join(cmd)
     return [line for line in subprocess.check_output(cmd, shell=True).decode("utf-8").split("\n") if line]

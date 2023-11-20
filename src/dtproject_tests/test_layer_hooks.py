@@ -28,8 +28,12 @@ class TestLayerSelf(unittest.TestCase):
         pd = get_project_path("basic_v4")
         p = DTProject(pd)
         # ---
-    
-        
+        self.assertEqual(p.hooks, LayerHooks(hooks={}))
+        self.assertEqual(p.hooks.hooks["non-existent-hook"], [])
+        self.assertEqual(p.hooks.hooks.get("non-existent-hook"), [])
+        self.assertEqual(p.hooks.hooks.get("non-existent-hook", []), [])
+
+
     def test_layer_self_project_v4_custom(self):
         pd = get_project_path("custom_v4")
         p = DTProject(pd)

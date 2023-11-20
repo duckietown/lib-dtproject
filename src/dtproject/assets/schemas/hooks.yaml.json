@@ -11,6 +11,9 @@
         "version": {
             "type": "integer"
         },
+        "format": {
+            "type": "number"
+        },
         "hooks": {
             "type": "object",
             "patternProperties": {

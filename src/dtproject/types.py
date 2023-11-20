@@ -1,5 +1,5 @@
 import dataclasses
-from typing import List, Optional, TypeVar, Generic
+from typing import List, Optional, TypeVar, Generic, Iterator
 
 import yaml
 from dataclass_wizard import YAMLWizard
@@ -8,6 +8,7 @@ from .constants import *
 from .utils.misc import ddict
 
 T = TypeVar("T")
+EventName = str
 
 
 class Layer:
@@ -167,6 +168,16 @@ class Hook:
 @dataclasses.dataclass
 class LayerHooks(DataClassLayer):
     hooks: Dict[str, List[Hook]] = dataclasses.field(default_factory=lambda: ddict(list))
+
+    def __iter__(self) -> Iterator[Tuple[EventName, List[Hook]]]:
+        for e, h in self.hooks.items():
+            yield e, h
+
+    def __getitem__(self, item):
+        return self.hooks[item]
+
+    def get(self, __key, _=None) -> list:
+        return self.hooks[__key]
 
 
 class LayerDevContainers(DictLayer[DevContainerConfiguration]):

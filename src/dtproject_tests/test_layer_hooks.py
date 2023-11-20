@@ -38,7 +38,17 @@ class TestLayerSelf(unittest.TestCase):
         pd = get_project_path("custom_v4")
         p = DTProject(pd)
         # ---
-        self.assertEqual(p.hooks, LayerHooks(hooks={'pre-build': [Hook(command='echo "pre-build hook"', required=True)], 'post-build': [Hook(command='echo "post-build hook"', required=True)],}))
+        self.assertEqual(
+            p.hooks,
+            LayerHooks(hooks={
+                'pre-build': [Hook(command='echo "pre-build hook"', required=True)],
+                'post-build': [Hook(command='echo "post-build hook"', required=True)]
+            })
+        )
+        # TODO: implement tests for the functions
+        #   LayerHooks.__iter__
+        #   LayerHooks.__getitem__
+        #   LayerHooks.get
 
 
 if __name__ == '__main__':

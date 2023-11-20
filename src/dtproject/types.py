@@ -1,3 +1,4 @@
+from collections import defaultdict
 import dataclasses
 from typing import DefaultDict, List, Optional, TypeVar, Generic, Dict
 
@@ -159,13 +160,12 @@ class DevContainerConfiguration(dict):
 
 @dataclasses.dataclass
 class Hook():
-    command: str = ""
+    command: str
     required: Optional[bool] = False
 
 @dataclasses.dataclass
 class LayerHooks(DataClassLayer):
-    version: int
-    hooks: DefaultDict[str, List[Hook]]
+    hooks: DefaultDict[str, List[Hook]] = dataclasses.field(default_factory=lambda: defaultdict(list))
 
 class LayerDevContainers(DictLayer[DevContainerConfiguration]):
     ITEM_CLASS = DevContainerConfiguration

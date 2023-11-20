@@ -1,0 +1,19 @@
+{
+    "container": "default",
+    "remoteEnv": null,
+    "remoteUser": null,
+    "containerUser": null,
+    "updateRemoteUserUID": null,
+    "shutdownAction": null,
+    "init": null,
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                ""
+            ]
+        }
+    },
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "default",
+    "workspaceFolder": "/code"
+}

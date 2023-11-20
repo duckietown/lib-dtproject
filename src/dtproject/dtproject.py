@@ -7,7 +7,7 @@ from abc import abstractmethod
 from pathlib import Path
 from subprocess import CalledProcessError
 from types import SimpleNamespace
-from typing import Optional, List, Union, Set, cast, Any
+from typing import Optional, List, Union, Set, cast, Any, Dict
 
 import requests
 import yaml

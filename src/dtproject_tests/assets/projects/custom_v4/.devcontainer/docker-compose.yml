@@ -1,0 +1,7 @@
+services:
+    default:
+        image: registry-stage2.duckietown.org/duckietown/lib-dtproject-tests-project-basic-v4:ente-amd64
+        volumes:
+        - /home/davide/Duckietown/ente-staging/libraries/lib-dtproject/src/dtproject_tests/assets/projects/custom_v4/:/code/src/lib-dtproject-tests-project-basic-v4/
+        - /home/davide/Duckietown/ente-staging/libraries/lib-dtproject/src/dtproject_tests/assets/projects/custom_v4/launchers:/launch/lib-dtproject-tests-project-basic-v4
+version: '3.8'

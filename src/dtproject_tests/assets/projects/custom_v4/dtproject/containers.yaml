@@ -1,4 +1,2 @@
 'default':
-  image: 'dtproject_tests/assets/projects/custom_v4/dtproject/containers.yaml'
-  command: 'echo "Hello World"'
   __plain__: true

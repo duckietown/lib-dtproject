@@ -1,0 +1,9 @@
+default:
+  container: default
+  customizations:
+    vscode:
+      extensions:
+        - ""
+  dockerComposeFile: docker-compose.yml
+  service: default
+  workspaceFolder: /code

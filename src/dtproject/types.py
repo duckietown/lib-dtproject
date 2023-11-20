@@ -118,7 +118,8 @@ class Recipe:
 class LayerRecipes(DictLayer[Recipe]):
     ITEM_CLASS = Recipe
 
-
+# TODO: if we use custom fields in the YAML file this will throw an error on init,
+#  we should handle this
 @dataclasses.dataclass
 class ContainerConfiguration(dict):
     __extends__: Optional[str] = None
@@ -129,7 +130,7 @@ class LayerContainers(DictLayer[ContainerConfiguration]):
     ITEM_CLASS = ContainerConfiguration
 
 @dataclasses.dataclass
-class DevContainerConfiguration(dict):
+class DevContainerConfiguration(DataClassLayer):
     """
     Represents a configuration for a development container.
 

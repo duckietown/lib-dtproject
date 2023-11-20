@@ -45,11 +45,23 @@ class TestLayerSelf(unittest.TestCase):
                 'post-build': [Hook(command='echo "post-build hook"', required=True)]
             })
         )
-        # TODO: implement tests for the functions
-        #   LayerHooks.__iter__
-        #   LayerHooks.__getitem__
-        #   LayerHooks.get
 
+        # Test for LayerHooks.__iter__
+        for e, h in p.hooks:
+            if e == 'pre-build':
+                self.assertEqual(h, [Hook(command='echo "pre-build hook"', required=True)])
+            elif e == 'post-build':
+                self.assertEqual(h, [Hook(command='echo "post-build hook"', required=True)])
+
+        # Test for LayerHooks.__getitem__
+        self.assertEqual(p.hooks['pre-build'], [Hook(command='echo "pre-build hook"', required=True)])
+        self.assertEqual(p.hooks['non-existent-hook'], [])
+       
+        # Test for LayerHooks.get
+        self.assertEqual(p.hooks.get('pre-build'), [Hook(command='echo "pre-build hook"', required=True)])
+        self.assertEqual(p.hooks.get('non-existent-hook'), [])
+
+        
 
 if __name__ == '__main__':
     TestLayerSelf().test_layer_self_project_v4_custom()

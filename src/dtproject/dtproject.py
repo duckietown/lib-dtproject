@@ -46,7 +46,7 @@ class DTProject:
         self: LayerSelf
         distro: LayerDistro
         base: LayerBase
-        hooks: LayerHooks
+        hooks: LayerHooks = dataclasses.field(default_factory=LayerHooks)
         options: LayerOptions = dataclasses.field(default_factory=LayerOptions)
         template: Optional[LayerTemplate] = None
         recipes: LayerRecipes = dataclasses.field(default_factory=LayerRecipes.empty)

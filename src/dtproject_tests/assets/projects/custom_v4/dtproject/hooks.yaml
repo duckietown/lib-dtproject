@@ -1,32 +1,8 @@
 version: 1
 hooks:
   pre-build:
-    - command: echo "EXECUTED pre-build hook"
+    - command: echo "pre-build hook"
       required: true
   post-build:
-    - command: echo "EXECUTED post-build hook"
-      required: true
-  post-build-failed:
-    - command: echo "EXECUTED post-build-failed hook"
-      required: true
-  pre-push:
-    - command: echo "EXECUTED pre-push hook"
-      required: true
-  post-push:
-    - command: echo "EXECUTED post-push hook"
-      required: true
-  post-push-failed:
-    - command: echo "EXECUTED post-push-failed hook"
-      required: true
-  pre-bump:
-    - command: echo "EXECUTED pre-bump hook"
-      required: true
-  post-bump:
-    - command: echo "EXECUTED post-bump hook"
-      required: true
-  pre-run:
-    - command: echo "EXECUTED pre-run hook"
-      required: true
-  post-run:
-    - command: echo "EXECUTED post-run hook"
+    - command: echo "post-build hook"
       required: true

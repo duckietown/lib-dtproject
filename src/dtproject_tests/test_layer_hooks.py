@@ -34,7 +34,7 @@ class TestLayerSelf(unittest.TestCase):
         pd = get_project_path("custom_v4")
         p = DTProject(pd)
         # ---
-        self.assertEqual(p.hooks,LayerHooks(version=2, hooks={'pre-build': [Hook(command='echo "pre-build hook"', required=True)], 'post-build': [Hook(command='echo "post-build hook"', required=True)],}))
+        self.assertEqual(p.hooks, LayerHooks(hooks={'pre-build': [Hook(command='echo "pre-build hook"', required=True)], 'post-build': [Hook(command='echo "post-build hook"', required=True)],}))
 
 
 if __name__ == '__main__':

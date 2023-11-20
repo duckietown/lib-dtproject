@@ -1,5 +1,5 @@
 import dataclasses
-from typing import List, Optional, TypeVar, Generic, Iterator
+from typing import List, Optional, TypeVar, Generic, Iterator, Dict
 
 import yaml
 from dataclass_wizard import YAMLWizard
@@ -174,10 +174,13 @@ class LayerHooks(DataClassLayer):
             yield e, h
 
     def __getitem__(self, item):
-        return self.hooks[item]
+        try:
+            return self.hooks[item]
+        except KeyError:
+            return []
 
     def get(self, __key, _=None) -> list:
-        return self.hooks[__key]
+        return self.__getitem__(__key)
 
 
 class LayerDevContainers(DictLayer[DevContainerConfiguration]):

@@ -1,0 +1,41 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://example.com/hooks.schema.json",
+    "type": "object",
+    "required": [
+        "version",
+        "hooks"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "version": {
+            "type": "integer"
+        },
+        "format": {
+            "type": "number"
+        },
+        "hooks": {
+            "type": "object",
+            "patternProperties": {
+                ".*": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "command"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                            "command": {
+                                "type": "string"
+                            },
+                            "required": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

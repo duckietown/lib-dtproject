@@ -7,7 +7,7 @@ from abc import abstractmethod
 from pathlib import Path
 from subprocess import CalledProcessError
 from types import SimpleNamespace
-from typing import Optional, List, Union, Set, cast, Any
+from typing import Optional, List, Union, Set, cast, Any, Dict
 
 import requests
 import yaml
@@ -28,7 +28,7 @@ from .exceptions import \
 
 from .constants import *
 from .types import LayerSelf, LayerTemplate, LayerDistro, LayerBase, LayerRecipes, LayerOptions, Recipe, \
-    Layer, LayerFormat, LayerContainers, LayerDevContainers
+    Layer, LayerFormat, LayerContainers, LayerDevContainers, LayerHooks
 from .utils.docker import docker_client
 from .utils.misc import run_cmd, git_remote_url_to_https, assert_canonical_arch, DEPRECATED, \
     load_dependencies_file, safe_name
@@ -46,6 +46,7 @@ class DTProject:
         self: LayerSelf
         distro: LayerDistro
         base: LayerBase
+        hooks: LayerHooks = dataclasses.field(default_factory=LayerHooks)
         options: LayerOptions = dataclasses.field(default_factory=LayerOptions)
         template: Optional[LayerTemplate] = None
         recipes: LayerRecipes = dataclasses.field(default_factory=LayerRecipes.empty)
@@ -62,6 +63,7 @@ class DTProject:
         "options": LayerOptions,
         "containers": LayerContainers,
         "devcontainers": LayerDevContainers,
+        "hooks": LayerHooks,
     }
     KNOWN_LAYERS = {**REQUIRED_LAYERS, **OPTIONAL_LAYERS}
 
@@ -137,6 +139,11 @@ class DTProject:
     @property
     @abstractmethod
     def devcontainers(self) -> LayerDevContainers:
+        pass
+    
+    @property
+    @abstractmethod
+    def hooks(self) -> LayerHooks:
         pass
 
     @property
@@ -885,6 +892,10 @@ class DTProjectV4(DTProject):
     @property
     def devcontainers(self) -> LayerDevContainers:
         return self._layers.devcontainers
+
+    @property
+    def hooks(self) -> LayerHooks:
+        return self._layers.hooks
 
     @property
     def description(self) -> str:

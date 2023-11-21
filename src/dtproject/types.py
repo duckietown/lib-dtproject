@@ -1,13 +1,14 @@
 import dataclasses
-from typing import List, Optional, TypeVar, Generic, Union, Dict
+from typing import List, Optional, TypeVar, Generic, Iterator, Dict
 
 import yaml
 from dataclass_wizard import YAMLWizard
 
 from .constants import *
-
+from .utils.misc import ddict
 
 T = TypeVar("T")
+EventName = str
 
 
 class Layer:
@@ -157,6 +158,29 @@ class DevContainerConfiguration(dict):
     service: Optional[str] = None
     workspaceFolder: Optional[str] = None
 
+
+@dataclasses.dataclass
+class Hook:
+    command: str
+    required: Optional[bool] = False
+
+
+@dataclasses.dataclass
+class LayerHooks(DataClassLayer):
+    hooks: Dict[str, List[Hook]] = dataclasses.field(default_factory=lambda: ddict(list))
+
+    def __post_init__(self):
+        self.hooks = ddict(list, self.hooks)
+
+    def __iter__(self) -> Iterator[Tuple[EventName, List[Hook]]]:
+        for e, h in self.hooks.items():
+            yield e, h
+
+    def __getitem__(self, item):
+        return self.hooks[item]
+
+    def get(self, __key, _=None) -> list:
+        return self.hooks[__key]
 
 class LayerDevContainers(DictLayer[DevContainerConfiguration]):
     ITEM_CLASS = DevContainerConfiguration

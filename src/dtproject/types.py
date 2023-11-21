@@ -169,19 +169,18 @@ class Hook:
 class LayerHooks(DataClassLayer):
     hooks: Dict[str, List[Hook]] = dataclasses.field(default_factory=lambda: ddict(list))
 
+    def __post_init__(self):
+        self.hooks = ddict(list, self.hooks)
+
     def __iter__(self) -> Iterator[Tuple[EventName, List[Hook]]]:
         for e, h in self.hooks.items():
             yield e, h
 
     def __getitem__(self, item):
-        try:
-            return self.hooks[item]
-        except KeyError:
-            return []
+        return self.hooks[item]
 
     def get(self, __key, _=None) -> list:
-        return self.__getitem__(__key)
-
+        return self.hooks[__key]
 
 class LayerDevContainers(DictLayer[DevContainerConfiguration]):
     ITEM_CLASS = DevContainerConfiguration

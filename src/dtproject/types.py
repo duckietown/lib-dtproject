@@ -122,9 +122,18 @@ class LayerRecipes(DictLayer[Recipe]):
 
 @dataclasses.dataclass
 class ContainerConfiguration(dict):
-    __extends__: Optional[str] = None
+    """This class stores the docker-compose configuration for a single container (i.e. a 'service' in the terminology used by docker-compose).
+
+    Attributes:
+        __extends__ (List[str]): The name of the container configurations stored in the `containers.yaml` layer to extend.
+        __plain__ (bool): If True, the container configuration is not extended from any other configuration.
+    """
+    __extends__: Optional[List[str]] = None
     __plain__: Optional[bool] = None
 
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
 class LayerContainers(DictLayer[ContainerConfiguration]):
     ITEM_CLASS = ContainerConfiguration

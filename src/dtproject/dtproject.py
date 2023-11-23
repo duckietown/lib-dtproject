@@ -996,19 +996,19 @@ class DTProjectV4(DTProject):
         return recipe
 
     def get_devcontainer(self, config_name: str) -> ContainerConfiguration:
-        container_configuration = self.containers[config_name]
+        container_configuration : ContainerConfiguration = self.containers[config_name]
         # If the '__extend__' key is present, the container configuration is extended from the one specified in the '__extend__' key
-        extend_from : List = container_configuration.__dict__.get('__extends__', None)
-
+        extend_from : List = container_configuration.__extends__
+        print(f"Extending from containers: {extend_from}")
         if extend_from is not None:
             for container_name in extend_from:
                 if container_name not in self.containers:
-                    return
-
-                container_configuration.__dict__.update(self.containers[container_name].__dict__)
-            container_configuration.__dict__.pop('__extends__', None)
-
-        container_configuration.__dict__.pop('__plain__', None)
+                    raise NotFound(f"Container {container_name} not found in project {self.name}. Check the containers.yaml file.")
+                container_configuration.update(self.containers[container_name])
+            
+            del container_configuration.__extends__
+        else:
+            del container_configuration.__plain__
 
         return container_configuration
 

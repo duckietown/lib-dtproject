@@ -130,10 +130,15 @@ class ContainerConfiguration(dict):
     """
     __extends__: Optional[List[str]] = None
     __plain__: Optional[bool] = None
-    environment: Optional[Dict[str, str]] = dataclasses.field(default_factory=dict)
+    # environment: Optional[Dict[str, str]] = dataclasses.field(default_factory=dict)
 
     def __init__(self, **kwargs):
+        super().__init__()
         for key, value in kwargs.items():
+            setattr(self, key, value)
+
+    def update(self, other):
+        for key, value in other.__dict__.items():
             setattr(self, key, value)
 
 class LayerContainers(DictLayer[ContainerConfiguration]):

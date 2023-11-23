@@ -27,7 +27,7 @@ from .exceptions import \
     InconsistentDTProject
 
 from .constants import *
-from .types import LayerSelf, LayerTemplate, LayerDistro, LayerBase, LayerRecipes, LayerOptions, Recipe, \
+from .types import ContainerConfiguration, DevContainerConfiguration, LayerSelf, LayerTemplate, LayerDistro, LayerBase, LayerRecipes, LayerOptions, Recipe, \
     Layer, LayerFormat, LayerContainers, LayerDevContainers, LayerHooks
 from .utils.docker import docker_client
 from .utils.misc import run_cmd, git_remote_url_to_https, assert_canonical_arch, DEPRECATED, \
@@ -743,6 +743,13 @@ class DTProject:
     def py3_dependencies_dt(self, comments: bool = False, ) -> List[str]:
         dependencies_fpath: str = os.path.join(self.path, "dependencies-py3.dt.txt")
         return load_dependencies_file(dependencies_fpath, comments=comments)
+    
+    @abstractmethod
+    def get_devcontainer(self, config_name: str) -> ContainerConfiguration:
+        """
+        This method returns the devcontainer configuration for the project.
+        """
+        pass
 
     @staticmethod
     def _get_repo_info(path):
@@ -988,6 +995,23 @@ class DTProjectV4(DTProject):
             recipe.branch = self._recipe_version
         return recipe
 
+    def get_devcontainer(self, config_name: str) -> ContainerConfiguration:
+        container_configuration = self.containers[config_name]
+        # If the '__extend__' key is present, the container configuration is extended from the one specified in the '__extend__' key
+        extend_from : List = container_configuration.__dict__.get('__extends__', None)
+
+        if extend_from is not None:
+            for container_name in extend_from:
+                if container_name not in self.containers:
+                    return
+
+                container_configuration.__dict__.update(self.containers[container_name].__dict__)
+            container_configuration.__dict__.pop('__extends__', None)
+
+        container_configuration.__dict__.pop('__plain__', None)
+
+        return container_configuration
+
     @staticmethod
     def _load_layers(path: str) -> 'DTProject.Layers':
         if not os.path.exists(path):
@@ -1061,7 +1085,6 @@ class DTProjectV4(DTProject):
             return False
         # ---
         return True
-
 
 class DTProjectV1to3(DTProject):
     """
@@ -1168,6 +1191,9 @@ class DTProjectV1to3(DTProject):
         if self.needs_recipe:
             recipes["default"] = self.recipe_info
         return recipes
+
+    def get_devcontainer(self, config_name: str) -> ContainerConfiguration:
+        raise NotImplementedError(f"Field 'devcontainers' not implemented in DTProject v{self.type_version}")
 
     @staticmethod
     def _get_project_info(path: str):

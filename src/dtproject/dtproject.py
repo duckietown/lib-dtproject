@@ -1007,7 +1007,8 @@ class DTProjectV4(DTProject):
                 container_configuration.update(self.containers[container_name])
             
             del container_configuration.__extends__
-        else:
+        
+        if container_configuration.__plain__ is not None:
             del container_configuration.__plain__
 
         return container_configuration

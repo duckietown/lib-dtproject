@@ -761,7 +761,15 @@ class DTProject:
             else:
                 raise e
         # get branch name
-        branch = run_cmd(["git", "-C", f'"{path}"', "branch", "--show-current"])[0]
+        try:
+            branch: str = run_cmd(["git", "-C", f'"{path}"', "branch", "--show-current"])[0]
+        except CalledProcessError:
+            # try an older syntax (e.g., Macs are still using an old version of 'git')
+            try:
+                branch: str = run_cmd(["git", "-C", f'"{path}"', "rev-parse", "--abbrev-ref", "HEAD"])[0]
+            except CalledProcessError:
+                raise RuntimeError("We could not retrieve the name of the branch for the repository at "
+                                   f"'{path}'")
         # head tag
         try:
             head_tag = run_cmd(

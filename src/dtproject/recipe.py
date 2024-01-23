@@ -74,7 +74,7 @@ def recipe_needs_update(recipe: Recipe) -> bool:
         last_time_checked = os.path.getmtime(commands_update_check_flag)
         use_cached_recipe = now - last_time_checked < CHECK_RECIPE_UPDATE_MINS * 60
     else:  # Save the initial .update flag
-        local_sha: str = run_cmd(["git", "-C", recipe_dir, "rev-parse", "HEAD"])
+        local_sha: str = run_cmd(["git", "-C", recipe_dir, "rev-parse", "HEAD"])[0]
         # noinspection PyTypeChecker
         local_sha = next(filter(len, local_sha.split("\n")))
         save_update_check_flag(recipe_dir, local_sha)

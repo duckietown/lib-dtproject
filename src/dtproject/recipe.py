@@ -41,7 +41,7 @@ def clone_recipe(recipe: Recipe) -> bool:
     Args:
         recipe: the recipe to clone
     """
-    repository, branch, provider = recipe.repository, recipe.branch, recipe.provider
+    repository, organization, branch, provider = recipe.repository, recipe.organization, recipe.branch, recipe.provider
     recipe_dir: str = get_recipe_project_dir(recipe)
     if recipe_project_exists(recipe):
         raise DTProjectError(f"Recipe already exists at '{recipe_dir}'")
@@ -51,7 +51,7 @@ def clone_recipe(recipe: Recipe) -> bool:
         repo_dir: str = get_recipe_repo_dir(recipe)
         logger.info(f"Downloading recipes...")
         logger.debug(f"Downloading recipes into '{repo_dir}' ...")
-        remote_url: str = f"https://{provider}/{repository}"
+        remote_url: str = f"https://{provider}/{organization}/{repository}"
         run_cmd(["git", "clone", "-b", branch, "--recurse-submodules", remote_url, repo_dir])
         logger.info(f"Recipes downloaded!")
         return True

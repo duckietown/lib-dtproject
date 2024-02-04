@@ -41,7 +41,7 @@ def clone_recipe(recipe: Recipe) -> bool:
     Args:
         recipe: the recipe to clone
     """
-    repository, branch, provider = recipe.repository, recipe.branch, recipe.provider
+    repository, organization, branch, provider = recipe.repository, recipe.organization, recipe.branch, recipe.provider
     recipe_dir: str = get_recipe_project_dir(recipe)
     if recipe_project_exists(recipe):
         raise DTProjectError(f"Recipe already exists at '{recipe_dir}'")
@@ -51,7 +51,7 @@ def clone_recipe(recipe: Recipe) -> bool:
         repo_dir: str = get_recipe_repo_dir(recipe)
         logger.info(f"Downloading recipes...")
         logger.debug(f"Downloading recipes into '{repo_dir}' ...")
-        remote_url: str = f"https://{provider}/{repository}"
+        remote_url: str = f"https://{provider}/{organization}/{repository}"
         run_cmd(["git", "clone", "-b", branch, "--recurse-submodules", remote_url, repo_dir])
         logger.info(f"Recipes downloaded!")
         return True
@@ -74,7 +74,7 @@ def recipe_needs_update(recipe: Recipe) -> bool:
         last_time_checked = os.path.getmtime(commands_update_check_flag)
         use_cached_recipe = now - last_time_checked < CHECK_RECIPE_UPDATE_MINS * 60
     else:  # Save the initial .update flag
-        local_sha: str = run_cmd(["git", "-C", recipe_dir, "rev-parse", "HEAD"])
+        local_sha: str = run_cmd(["git", "-C", recipe_dir, "rev-parse", "HEAD"])[0]
         # noinspection PyTypeChecker
         local_sha = next(filter(len, local_sha.split("\n")))
         save_update_check_flag(recipe_dir, local_sha)

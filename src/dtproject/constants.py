@@ -77,6 +77,9 @@ TEMPLATE_TO_SRC: Dict[ProjectType,
         "3": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
         "4": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
     },
+    "dt-ros2-commons": {
+        "4": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
+    },
     # NOTE: these are templates and are shared by multiple projects
     "template-basic": {
         "1": lambda _repo: ("code", "/packages/{:s}/".format(_repo)),
@@ -88,6 +91,9 @@ TEMPLATE_TO_SRC: Dict[ProjectType,
         "1": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
         "2": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
         "3": lambda _repo: ("", "/code/catkin_ws/src/{:s}/".format(_repo)),
+        "4": lambda _repo: ("", "/code/src/{:s}/".format(_repo)),
+    },
+    "template-ros2": {
         "4": lambda _repo: ("", "/code/src/{:s}/".format(_repo)),
     },
     "template-core": {
@@ -133,6 +139,9 @@ TEMPLATE_TO_LAUNCHFILE: Dict[ProjectType,
         "3": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
         "4": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
     },
+    "dt-ros2-commons": {
+        "4": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
+    },
     # NOTE: these are templates and are shared by multiple projects
     "template-basic": {
         "1": lambda _repo: ("launch.sh", "/launch/{:s}/launch.sh".format(_repo)),
@@ -144,6 +153,9 @@ TEMPLATE_TO_LAUNCHFILE: Dict[ProjectType,
         "1": lambda _repo: ("launch.sh", "/launch/{:s}/launch.sh".format(_repo)),
         "2": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
         "3": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
+        "4": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
+    },
+    "template-ros2": {
         "4": lambda _repo: ("launchers", "/launch/{:s}".format(_repo)),
     },
     "template-core": {
@@ -195,12 +207,20 @@ TEMPLATE_TO_DOCS: Dict[ProjectType,
         # versions 1-3 are not supported by this library
         "4": "docs",
     },
+    "dt-ros2-commons": {
+        # versions 1-3 are not supported by this library
+        "4": "docs",
+    },
     # NOTE: these are templates and are shared by multiple projects
     "template-basic": {
         # versions 1-3 are not supported by this library
         "4": "docs",
     },
     "template-ros": {
+        # versions 1-3 are not supported by this library
+        "4": "docs",
+    },
+    "template-ros2": {
         # versions 1-3 are not supported by this library
         "4": "docs",
     },

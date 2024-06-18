@@ -36,10 +36,10 @@ version = get_version_from_source("src/dtproject/__init__.py")
 install_requires = [
     # add library dependencies here
     "pyyaml<=6.0.1",
-    "dockertown<=0.2.5",
     "requests<=2.31.0",
     "dataclass-wizard<=0.22.2",
     "requirements-parser<=0.5.0"
+    "dockertown>=0.2.6,<0.3",
 ]
 tests_require = [
     # add testing requirements here

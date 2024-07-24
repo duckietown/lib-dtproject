@@ -122,15 +122,16 @@ class LayerRecipes(DictLayer[Recipe]):
 
 @dataclasses.dataclass
 class ContainerConfiguration(dict):
-    """This class stores the docker-compose configuration for a single container (i.e. a 'service' in the terminology used by docker-compose).
+    """
+    This class stores the docker-compose configuration for a single container
+    (i.e. a 'service' in the terminology used by docker-compose).
 
     Attributes:
-        __extends__ (List[str]): The name of the container configurations stored in the `containers.yaml` layer to extend.
+        __extends__ (List[str]): The name of the container configurations stored in `containers.yaml` layer to extend.
         __plain__ (bool): If True, the container configuration is not extended from any other configuration.
     """
     __extends__: Optional[List[str]] = None
     __plain__: Optional[bool] = None
-    # environment: Optional[Dict[str, str]] = dataclasses.field(default_factory=dict)
 
     def __init__(self, **kwargs):
         super().__init__()
@@ -141,8 +142,14 @@ class ContainerConfiguration(dict):
         for key, value in other.__dict__.items():
             setattr(self, key, value)
 
+    @property
+    def service(self) -> dict:
+        return self.__dict__
+
+
 class LayerContainers(DictLayer[ContainerConfiguration]):
     ITEM_CLASS = ContainerConfiguration
+
 
 @dataclasses.dataclass
 class DevContainerConfiguration(dict):
@@ -196,6 +203,7 @@ class LayerHooks(DataClassLayer):
 
     def get(self, __key, _=None) -> list:
         return self.hooks[__key]
+
 
 class LayerDevContainers(DictLayer[DevContainerConfiguration]):
     ITEM_CLASS = DevContainerConfiguration

@@ -70,5 +70,6 @@ setup(
     package_dir={"": "src"},
     packages=find_packages("./src"),
     long_description=description,
+    long_description_content_type='text/markdown',
     version=version,
 )

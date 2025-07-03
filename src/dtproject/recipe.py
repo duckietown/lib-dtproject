@@ -62,7 +62,7 @@ def clone_recipe(recipe: Recipe) -> bool:
 
 
 def recipe_needs_update(recipe: Recipe) -> bool:
-    repository, branch = recipe.repository, recipe.branch
+    organization, repository, branch = recipe.organization, recipe.repository, recipe.branch
     recipe_dir: str = get_recipe_project_dir(recipe)
     need_update = False
     # Get the current repo info
@@ -93,7 +93,7 @@ def recipe_needs_update(recipe: Recipe) -> bool:
         # Get the remote sha from GitHub
         logger.info("Fetching remote SHA from github.com ...")
         # TODO: this should be conditioned on the provider, we have github hard-coded instead
-        remote_url: str = f"https://api.github.com/repos/{repository}/branches/{branch}"
+        remote_url: str = f"https://api.github.com/repos/{organization}/{repository}/branches/{branch}"
         try:
             data: dict = requests.get(remote_url).json()
             remote_sha = data["commit"]["sha"]
@@ -152,9 +152,7 @@ def update_recipe(recipe: Recipe) -> bool:
 
         # Get HEAD sha after update and save
         current_sha: str = run_cmd(["git", "-C", recipe_dir, "rev-parse", "HEAD"])
-        # noinspection PyTypeChecker
-        current_sha = next(filter(len, current_sha.split("\n")))
-        save_update_check_flag(recipe_dir, current_sha)
+        save_update_check_flag(recipe_dir, current_sha[0])
         return True  # Done updating
     else:
         logger.info(f"Recipe is up-to-date.")

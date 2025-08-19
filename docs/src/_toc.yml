@@ -1,0 +1,18 @@
+# Table of contents
+# Learn more at https://jupyterbook.org/customize/toc.html
+
+format: jb-book
+root: intro
+parts:
+    - caption: The DTProject ecosystem
+      maxdepth: 2
+      numbered: False
+      chapters:
+          - file: dtproject/introduction/index
+          - file: dtproject/get-started/index
+          - file: dtproject/the-dtproject-directory/index
+    - caption: API
+      maxdepth: 2
+      numbered: False
+      chapters:
+          - file: api/dtproject/api

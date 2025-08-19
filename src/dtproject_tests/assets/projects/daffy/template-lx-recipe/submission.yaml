@@ -1,0 +1,14 @@
+# challenge name(s); defaults to all compatible challenges
+challenge: ["<CHALLENGE_NAME_HERE>"]
+
+# conventions + format
+protocol: "<PROTOCOL_NAME_HERE>"
+
+# any user label - displayed in "challenges list"
+user-label: "<EXERCISE_NAME_HERE>"
+
+# any JSON payload
+user-payload: {}
+
+# validation challenge
+validation_challenge: "<VALIDATION_CHALLENGE_NAME_HERE>"

@@ -1,0 +1,19 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$comment": "Schema for /dtproject/template.yaml file",
+    "type": "object",
+    "properties": {
+        "name": {
+            "type": ["null", "string"]
+        },
+        "provider": {
+            "type": "string",
+            "default": "github.com"
+        },
+        "version": {
+            "type": "number"
+        }
+    },
+    "required": ["name", "version"],
+    "additionalProperties": false
+}

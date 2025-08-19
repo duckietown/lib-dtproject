@@ -1,0 +1,75 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$comment": "Schema for /dtproject/devcontainers.yaml file",
+    "title": "Duckietown devcontainers",
+    "type": "object",
+    "description": "Dictionary of named devcontainer-compatible configurations",
+    "patternProperties": {
+        ".*": {
+            "type": "object",
+            "description": "DevContainer-compatible configuration. This is whatever you would put inside a '.devcontainer.json' file",
+            "properties": {
+                
+                "container": {
+                    "type": "string",  
+                    "default": "default",  
+                    "details": "Name of the container configuration to load from the containers.yaml layer"  
+                },
+                "dockerComposeFile": {
+                    "type": "string",
+                    "description": "The path to the docker-compose file to use for the devcontainer",
+                    "default": "docker-compose.yml"
+                },
+                "service": {
+                    "type": "string",
+                    "description": "The name of the service to use for the devcontainer",
+                    "default": null
+                },
+                "workspaceFolder": {
+                    "type": "string",
+                    "default": null,
+                    "description": "Workspace folder path"
+                },
+                "customizations": {
+                    "type": "object",
+                    "properties": {
+                        "vscode": {
+                            "type": "object",
+                            "description": "Customizations for Visual Studio Code",
+                            "properties": {
+                                "extensions": {
+                                    "type": "array",
+                                    "default": [
+                                        "ms-iot.vscode-ros",
+                                        "ms-python.python",
+                                        "ms-vscode.cpptools"
+                                    ],
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "description": "Array of Visual Studio Code extensions"
+                                }
+                            },
+                            "required": [
+                                "extensions"
+                            ]
+                        },
+                        "container": {
+                            "description": "Docker compose-compatible additions to the container",
+                            "type": "object"
+                        }
+                    },
+                    "default": {
+                        "vscode": {
+                            "extensions": [
+                                "ms-iot.vscode-ros",
+                                "ms-python.python",
+                                "ms-vscode.cpptools"
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

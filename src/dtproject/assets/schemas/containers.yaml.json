@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$comment": "Schema for /dtproject/containers.yaml file",
+  "type": "object",
+  "description": "Dictionary of named container configurations. Use these for test and/or deployments",
+  "patternProperties": {
+    ".*": {
+      "allOf": [
+        {
+          "$ref": "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json#/definitions/service",
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "__extends__": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "A list of configurations to extend from.",
+              "uniqueItems": true
+            },
+            "__plain__": { "type": "boolean" }
+          }
+        }
+      ]
+    }
+  }
+}

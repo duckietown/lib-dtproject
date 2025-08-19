@@ -1,0 +1,30 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$comment": "Schema for /dtproject/base.yaml file",
+    "type": "object",
+    "properties": {
+        "registry": {
+            "type": "string",
+            "description": "Docker registry where to get the image from",
+            "default": "docker.io",
+            "format": "hostname"
+        },
+        "organization": {
+            "type": "string",
+            "description": "Organization owning the base image (e.g., duckietown)",
+            "default": "duckietown"
+        },
+        "repository": {
+            "type": "string",
+            "description": "Repository name of the base image"
+        },
+        "tag": {
+            "type": "string",
+            "description": "Tag name of the base image"
+        }
+    },
+    "required": [
+        "repository"
+    ],
+    "additionalProperties": false
+}

@@ -1,0 +1,4 @@
+registry: myregistry.io
+organization: myorganization
+tag: mytag
+repository: myrepository

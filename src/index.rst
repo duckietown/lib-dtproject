@@ -5,7 +5,7 @@ Welcome to the Duckietown Pondcleaner documentation
    :maxdepth: 2
    :caption: Contents:
 
-   duckietown_pondcleaner/index
+   dtproject/index
 
 
 Indices and tables

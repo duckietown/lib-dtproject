@@ -1,0 +1,7 @@
+name: lib-dtproject-tests-project-basic-v4
+maintainer:
+    name: tester
+    email: test@duckietown.com
+description: lib-dtproject-tests-project-basic-v4
+icon: square
+version: 0.0.0

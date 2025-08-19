@@ -1,0 +1,9 @@
+version: 1
+format: 1
+hooks:
+  pre-build:
+    - command: echo "pre-build hook"
+      required: true
+  post-build:
+    - command: echo "post-build hook"
+      required: true

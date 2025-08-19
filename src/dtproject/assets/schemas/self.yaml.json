@@ -1,0 +1,48 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$comment": "Schema for /dtproject/template.yaml file",
+    "type": "object",
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "Name of the project",
+            "pattern": "^[a-z][a-z0-9-_]+[a-z0-9]$"
+        },
+        "description": {
+            "type": "string",
+            "description": "Description of the project"
+        },
+        "maintainer": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Name of the maintainer in the format 'First Last'"
+                },
+                "email": {
+                    "type": "string",
+                    "description": "Email of the maintainer"
+                },
+                "organization": {
+                    "type": "string",
+                    "description": "Organization of the maintainer"
+                }
+            },
+            "required": ["name", "email"],
+            "additionalProperties": false
+        },
+        "icon": {
+            "type": "string",
+            "description": "Pick an icon from: https://fontawesome.com/v4.7.0/icons/"
+        },
+        "version": {
+            "type": "string",
+            "description": "Version of this project",
+            "minLength": 5,
+            "maxLength": 14,
+            "pattern": "^(?:0|[1-9]\\d*)\\.(?:0|[1-9]\\d*)\\.(?:0|[1-9]\\d*)$"
+        }
+    },
+    "required": ["name", "version"],
+    "additionalProperties": false
+}

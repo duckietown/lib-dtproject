@@ -5,8 +5,8 @@ from setuptools import find_packages, setup
 # it is not the python module names.
 package_name = "dtproject"
 library_webpage = "http://github.com/duckietown/lib-dtproject"
-maintainer = "Andrea F. Daniele"
-maintainer_email = "afdaniele@duckietown.com"
+maintainer = "Duckietown"
+maintainer_email = "admin@duckietown.com"
 short_description = "Utility library for working with Duckietown (DT)Projects"
 full_description = f"""
 {short_description}

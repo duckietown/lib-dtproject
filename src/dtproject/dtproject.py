@@ -2,6 +2,7 @@ import copy
 import dataclasses
 import glob
 import os
+import re
 import traceback
 from abc import abstractmethod
 from pathlib import Path
@@ -1172,7 +1173,7 @@ class DTProjectV1to3(DTProject):
 
     @property
     def distro(self) -> str:
-        return self._repository.branch.split("-")[0] if self._repository else "latest"
+        return re.split("-|/", self._repository.branch)[0] if self._repository else "latest"
 
     @property
     def metadata(self) -> Dict[str, str]:

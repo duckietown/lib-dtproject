@@ -78,7 +78,7 @@ class DTProject:
         self._custom_recipe_dir: Optional[str] = None
         self._recipe_version: Optional[str] = None
         # use `git` adapter if available
-        if os.path.isdir(os.path.join(self._path, ".git")):
+        if os.path.exists(os.path.join(self._path, ".git")):
             repo_info = self._get_repo_info(self._path)
             self._repository = SimpleNamespace(
                 name=repo_info["REPOSITORY"],
